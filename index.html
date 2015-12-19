@@ -59,6 +59,7 @@ textarea {
     <hr>
     <h2>Tips</h2>
     <p>Mac: <tt>traceroute -q1 google.com | pbcopy</tt></p>
+    <p><a href="https://github.com/stefansundin/traceroute-mapper/blob/gh-pages/README.md">Open from your terminal!</a></p>
     <hr>
     <ul>
       <li>Made by <a href="https://stefansundin.github.io/">Stefan Sundin</a>.</li>
@@ -126,6 +127,20 @@ $("#submit").click(function() {
     });
   });
 });
+
+var qs = window.location.search;
+if (qs[0] == "?") {
+  var params = {};
+  qs.substr(1).split("&").forEach(function(param) {
+    param = param.split("=");
+    params[param[0]] = decodeURIComponent(param[1]);
+  });
+  console.log(params);
+  if (params["trace"]) {
+    $("#trace").val(params["trace"]);
+    $("#submit").click();
+  }
+}
 </script>
 </body>
 </html>
