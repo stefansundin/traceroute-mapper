@@ -8,7 +8,7 @@ Put this in your `.bash_profile`:
 
 ```bash
 function traceroute-mapper {
-  open "https://stefansundin.github.io/traceroute-mapper/?trace=$(traceroute -q1 $*)"
+  open "http://stefansundin.github.io/traceroute-mapper/?trace=$(traceroute -q1 $*)"
 }
 ```
 

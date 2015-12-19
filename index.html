@@ -68,6 +68,11 @@ textarea {
   </div>
 
 <script>
+// force http because otherwise ipinfo calls will throw mixed content errors :(
+if (window.location.protocol == "https:") {
+  window.location = "http:" + window.location.href.substring(6);
+}
+
 var map = new google.maps.Map($("#map")[0], {
   center: {lat: 41.5710227, lng: -52.3357077},
   zoom: 2
@@ -135,7 +140,6 @@ if (qs[0] == "?") {
     param = param.split("=");
     params[param[0]] = decodeURIComponent(param[1]);
   });
-  console.log(params);
   if (params["trace"]) {
     $("#trace").val(params["trace"]);
     $("#submit").click();
