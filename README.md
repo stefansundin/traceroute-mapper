@@ -13,3 +13,7 @@ function traceroute-mapper {
 ```
 
 Then simply run: `traceroute-mapper google.com`
+
+### Windows
+
+Put [traceroute-mapper.bat](traceroute-mapper.bat) in your `%PATH%` (e.g. `C:\Windows\`), and run `traceroute-mapper google.com` in cmd.
