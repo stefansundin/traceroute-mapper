@@ -51,11 +51,14 @@ textarea {
 
   <div class="container">
     <hr>
-    <p>Run traceroute on your local machine, then paste the output here to map the route. <a>Show example.</a></p>
+    <p>Run <tt>traceroute</tt> on your local machine, then paste the output here to map the route. <a>Show example.</a></p>
     <p><textarea class="form-control" rows="20" id="trace"></textarea></p>
     <p><button class="form-control btn btn-primary" id="submit">Map it!</button></p>
     <hr>
     <div id="map"></div>
+    <hr>
+    <h2>Tips</h2>
+    <p>Mac: <tt>traceroute -q1 google.com | pbcopy</tt></p>
     <hr>
     <ul>
       <li>Made by <a href="https://stefansundin.github.io/">Stefan Sundin</a>.</li>
@@ -79,53 +82,48 @@ $("#submit").click(function() {
     }
   });
   console.log(hosts);
-  hosts.forEach(function(host,i,arr) {
+  hosts.forEach(function(host,i) {
     var ip = host["ip"];
-    if (ip.indexOf("192.168.") == 0) {
-      console.log(i, ip, "local ip");
-    }
-    else {
-      $.getJSON("http://ipinfo.io/"+ip, function(data) {
-        console.log(i, ip, data["loc"], data);
-        var ll = data["loc"].split(",");
-        arr[i]["loc"] = { lat: parseFloat(ll[0]), lng: parseFloat(ll[1]) };
+    $.get("http://ipinfo.io/"+ip+"/loc", function(loc) {
+      loc = loc.trim();
+      if (loc == "undefined") {
+        return;
+      }
+      var ll = loc.split(",").map(parseFloat);
+      console.log(i, ip, ll);
+      host["loc"] = { lat: ll[0], lng: ll[1] };
 
-        // draw marker
-        var marker = new google.maps.Marker({
-          map: map,
-          position: arr[i]["loc"],
-          title: JSON.stringify(data)
-        });
-
-        // draw lines
-        if (arr[i-1] && arr[i-1]["loc"]) {
-          // console.log((i-1), "has a marker:", arr[i-1]["loc"]);
-          console.log("drawing line between", [ arr[i-1]["loc"], arr[i]["loc"] ]);
-
-          var flightPath = new google.maps.Polyline({
-            map: map,
-            path: [ arr[i-1]["loc"], arr[i]["loc"] ],
-            geodesic: true,
-            strokeColor: '#FF0000',
-            strokeOpacity: 1.0,
-            strokeWeight: 2
-          });
-        }
-        if (arr[i+1] && arr[i+1]["loc"]) {
-          // console.log((i+1), "has a marker:", arr[i+1]["loc"]);
-          console.log("drawing line between", [ arr[i]["loc"], arr[i+1]["loc"] ]);
-
-          var flightPath = new google.maps.Polyline({
-            map: map,
-            path: [ arr[i]["loc"], arr[i+1]["loc"] ],
-            geodesic: true,
-            strokeColor: '#FF0000',
-            strokeOpacity: 1.0,
-            strokeWeight: 2
-          });
-        }
+      // draw marker
+      var marker = new google.maps.Marker({
+        map: map,
+        position: host["loc"],
+        title: loc
       });
-    }
+
+      // draw lines
+      if (hosts[i-1] && hosts[i-1]["loc"]) {
+        // console.log("drawing line between", [ hosts[i-1]["loc"], host["loc"] ]);
+        var flightPath = new google.maps.Polyline({
+          map: map,
+          path: [ hosts[i-1]["loc"], host["loc"] ],
+          geodesic: true,
+          strokeColor: '#FF0000',
+          strokeOpacity: 1.0,
+          strokeWeight: 2
+        });
+      }
+      if (hosts[i+1] && hosts[i+1]["loc"]) {
+        // console.log("drawing line between", [ host["loc"], hosts[i+1]["loc"] ]);
+        var flightPath = new google.maps.Polyline({
+          map: map,
+          path: [ host["loc"], hosts[i+1]["loc"] ],
+          geodesic: true,
+          strokeColor: '#FF0000',
+          strokeOpacity: 1.0,
+          strokeWeight: 2
+        });
+      }
+    });
   });
 });
 </script>
