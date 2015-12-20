@@ -6,7 +6,7 @@
 
   <meta charset="utf-8">
   <meta name="author" content="Stefan Sundin">
-  <meta name="description" content="Traceroute mapper">
+  <meta name="description" content="Visualize traceroute on a map.">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <link rel="icon" href="img/icon32.png">
@@ -36,11 +36,30 @@ header {
   margin-top: 25px;
   text-align: center;
 }
+h2 {
+  border-bottom: 1px solid #ccc;
+}
 textarea {
   font-family: monospace;
+  min-height: 200px;
+  resize: vertical;
 }
 #map {
   height: 500px;
+}
+#clear-map {
+  background-color: white;
+  border: 2px solid white;
+  border-radius: 3px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.3);
+  cursor: pointer;
+  margin: 8px;
+  text-align: center;
+  color: rgb(25,25,25);
+  font-family: Roboto, Arial, sans-serif;
+  font-size: 13px;
+  line-height: 20px;
+  padding: 4px 6px;
 }
 </style>
 </head>
@@ -52,20 +71,22 @@ textarea {
   <div class="container">
     <hr>
     <p>Run <tt>traceroute</tt> on your local machine, then paste the output here to map the route. <a>Show example.</a></p>
-    <p><textarea class="form-control" rows="20" id="trace"></textarea></p>
+    <p><textarea class="form-control" id="trace"></textarea></p>
     <p><button class="form-control btn btn-primary" id="submit">Map it!</button></p>
-    <hr>
     <div id="map"></div>
-    <hr>
     <h2>Tips</h2>
     <p>Mac: <tt>traceroute -q1 google.com | pbcopy</tt></p>
     <p>Windows: <tt>tracert google.com | clip</tt></p>
-    <p><a href="https://github.com/stefansundin/traceroute-mapper/blob/gh-pages/README.md">Open from your terminal!</a></p>
+    <p><a href="https://github.com/stefansundin/traceroute-mapper#traceroute-mapper">Open from your terminal!</a></p>
     <hr>
     <ul>
       <li>Made by <a href="https://stefansundin.github.io/">Stefan Sundin</a>.</li>
       <li>Uses <a href="http://ipinfo.io/">ipinfo.io</a> and Google Maps API.</li>
     </ul>
+  </div>
+
+  <div class="hidden">
+    <div id="clear-map">Clear map</div>
   </div>
 
 <script>
@@ -76,36 +97,51 @@ if (window.location.protocol == "https:") {
 
 var map = new google.maps.Map($("#map")[0], {
   center: {lat: 41.5710227, lng: -52.3357077},
-  zoom: 2
+  zoom: 2,
+  mapTypeControl: false,
+  streetViewControl: false
 });
+var markers = [];
+
+map.controls[google.maps.ControlPosition.TOP_LEFT].push($("#clear-map")[0]);
+$("#clear-map").click(function() {
+  markers.forEach(function(marker) {
+    marker.setMap(null);
+  });
+  markers = [];
+});
+
+// store location lookups in a database to prevent duplicate lookups
+var db = {};
 
 $("#submit").click(function() {
   var text = $("#trace").val();
   var hosts = [];
+  var ips = [];
   text.split("\n").forEach(function(line) {
-    var r;
-    if (/^ *\d+ /.test(line) && (r=/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/.exec(line)) !== null) {
-      hosts.push({ ip: r[0]});
+    var r1, r2;
+    if ((r1=/^ *(\d+) /.exec(line)) !== null && (r2=/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/.exec(line)) !== null) {
+      var n = parseInt(r1[1]);
+      var ip = r2[0];
+      if (ips.indexOf(ip) === -1) {
+        ips.push(ip);
+        hosts.push({ n: n, ip: ip });
+      }
     }
   });
-  console.log(hosts);
   hosts.forEach(function(host,i) {
     var ip = host["ip"];
-    $.get("http://ipinfo.io/"+ip+"/loc", function(loc) {
-      loc = loc.trim();
-      if (loc == "undefined") {
-        return;
-      }
-      var ll = loc.split(",").map(parseFloat);
-      console.log(i, ip, ll);
-      host["loc"] = { lat: ll[0], lng: ll[1] };
 
+    var resolve = function() {
       // draw marker
       var marker = new google.maps.Marker({
         map: map,
         position: host["loc"],
-        title: loc
+        label: host["n"] > 9 ? "+" : host["n"].toString(),
+        title: host["n"]+": "+ip,
+        zIndex: host["n"]
       });
+      markers.push(marker);
 
       // draw lines
       if (hosts[i-1] && hosts[i-1]["loc"]) {
@@ -114,10 +150,11 @@ $("#submit").click(function() {
           map: map,
           path: [ hosts[i-1]["loc"], host["loc"] ],
           geodesic: true,
-          strokeColor: '#FF0000',
+          strokeColor: "#FF0000",
           strokeOpacity: 1.0,
           strokeWeight: 2
         });
+        markers.push(flightPath);
       }
       if (hosts[i+1] && hosts[i+1]["loc"]) {
         // console.log("drawing line between", [ host["loc"], hosts[i+1]["loc"] ]);
@@ -125,12 +162,33 @@ $("#submit").click(function() {
           map: map,
           path: [ host["loc"], hosts[i+1]["loc"] ],
           geodesic: true,
-          strokeColor: '#FF0000',
+          strokeColor: "#FF0000",
           strokeOpacity: 1.0,
           strokeWeight: 2
         });
+        markers.push(flightPath);
       }
-    });
+    }
+
+    if (db[ip]) {
+      if (db[ip] != "undefined") {
+        host["loc"] = db[ip];
+        resolve();
+      }
+    }
+    else {
+      $.get("http://ipinfo.io/"+ip+"/loc", function(loc) {
+        loc = loc.trim();
+        if (loc == "undefined") {
+          db[ip] = loc;
+          return;
+        }
+        var ll = loc.split(",").map(parseFloat);
+        console.log(i, ip, ll);
+        db[ip] = host["loc"] = { lat: ll[0], lng: ll[1] };
+        resolve();
+      });
+    }
   });
 });
 
@@ -144,6 +202,7 @@ if (qs[0] == "?") {
   if (params["trace"]) {
     $("#trace").val(params["trace"]);
     $("#submit").click();
+    $("#map")[0].scrollIntoView();
   }
 }
 </script>
