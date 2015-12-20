@@ -70,7 +70,7 @@ textarea {
 
   <div class="container">
     <hr>
-    <p>Run <tt>traceroute</tt> on your local machine, then paste the output here to map the route. <a>Show example.</a></p>
+    <p>Run <tt>traceroute</tt> on your local machine, then paste the output here to map the route. <a id="example">Show example.</a></p>
     <p><textarea class="form-control" id="trace"></textarea></p>
     <p><button class="form-control btn btn-primary" id="submit">Map it!</button></p>
     <div id="map"></div>
@@ -187,6 +187,11 @@ $("#submit").click(function() {
         console.log(i, ip, ll);
         db[ip] = host["loc"] = { lat: ll[0], lng: ll[1] };
         resolve();
+      }).fail(function(xhr) {
+        console.log(xhr);
+        if (xhr.status == 429) {
+          $("#submit").prop("disabled", true).removeClass("btn-primary").addClass("btn-danger").text("ipinfo.io ratelimit exhausted. Please try again tomorrow, or run the script from your own server.");
+        }
       });
     }
   });
@@ -205,6 +210,34 @@ if (qs[0] == "?") {
     $("#map")[0].scrollIntoView();
   }
 }
+
+$("#example").click(function() {
+  $("#trace").val("traceroute to china.cn (202.130.245.42), 30 hops max, 60 byte packets\n\
+ 1  lc207-gw.campus.ltu.se (130.240.207.1)  0.219 ms\n\
+ 2  gw22.pub.ltu.se (130.240.22.129)  0.974 ms\n\
+ 3  sunetgreen.net.ltu.se (130.240.22.78)  1.336 ms\n\
+ 4  ltu-br1.sunet.se (193.11.0.48)  1.302 ms\n\
+ 5  ltu-br2-xe-0-0-3.sunet.se (130.242.85.94)  1.202 ms\n\
+ 6  z3lla-xe-2-0-0.sunet.se (130.242.85.89)  0.542 ms\n\
+ 7  se-lla.nordu.net (109.105.102.93)  0.574 ms\n\
+ 8  se-fre.nordu.net (109.105.97.113)  13.105 ms\n\
+ 9  s-b3-link.telia.net (213.248.97.17)  16.265 ms\n\
+10  s-bb4-link.telia.net (80.91.253.226)  13.546 ms\n\
+11  kbn-bb3-link.telia.net (62.115.139.167)  22.249 ms\n\
+12  nyk-bb1-link.telia.net (62.115.141.99)  115.487 ms\n\
+13  ash-bb4-link.telia.net (213.155.133.9)  126.166 ms\n\
+14  las-b3-link.telia.net (213.155.137.59)  194.745 ms\n\
+15  219.158.102.81 (219.158.102.81)  369.420 ms\n\
+16  219.158.102.81 (219.158.102.81)  385.404 ms\n\
+17  219.158.98.145 (219.158.98.145)  387.710 ms\n\
+18  124.65.194.82 (124.65.194.82)  368.584 ms\n\
+19  61.148.143.18 (61.148.143.18)  368.667 ms\n\
+20  61.148.143.18 (61.148.143.18)  378.916 ms\n\
+21  210.74.176.238 (210.74.176.238)  424.108 ms\n\
+22  210.74.176.238 (210.74.176.238)  429.721 ms");
+  $("#submit").click();
+});
+
 </script>
 </body>
 </html>
