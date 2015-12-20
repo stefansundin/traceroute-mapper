@@ -36,6 +36,18 @@ header {
   margin-top: 25px;
   text-align: center;
 }
+header a {
+  color: black;
+}
+header a:hover {
+  color: black;
+  cursor: default;
+  text-decoration: none;
+}
+header a:focus {
+  color: black;
+  text-decoration: none;
+}
 h2 {
   border-bottom: 1px solid #ccc;
 }
@@ -47,7 +59,7 @@ textarea {
 #map {
   height: 500px;
 }
-#clear-map {
+.map-btn {
   background-color: white;
   border: 2px solid white;
   border-radius: 3px;
@@ -61,11 +73,14 @@ textarea {
   line-height: 20px;
   padding: 4px 6px;
 }
+a.map-btn:hover {
+  text-decoration: none;
+}
 </style>
 </head>
 <body>
   <header>
-    <h1 itemprop="name">Traceroute mapper</h1>
+    <h1 itemprop="name"><a href="/traceroute-mapper/">Traceroute mapper</a></h1>
   </header>
 
   <div class="container">
@@ -81,12 +96,14 @@ textarea {
     <hr>
     <ul>
       <li>Made by <a href="https://stefansundin.github.io/">Stefan Sundin</a>.</li>
+      <li>View <a href="https://github.com/stefansundin/traceroute-mapper">source code</a>.</li>
       <li>Uses <a href="http://ipinfo.io/">ipinfo.io</a> and Google Maps API.</li>
     </ul>
   </div>
 
   <div class="hidden">
-    <div id="clear-map">Clear map</div>
+    <div class="map-btn" id="clear-map">Clear map</div>
+    <a class="map-btn" id="permalink">Permalink <span class="glyphicon glyphicon-share"></span></a>
   </div>
 
 <script>
@@ -96,7 +113,7 @@ if (window.location.protocol == "https:") {
 }
 
 var map = new google.maps.Map($("#map")[0], {
-  center: {lat: 41.5710227, lng: -52.3357077},
+  center: { lat: 35, lng: 0 },
   zoom: 2,
   mapTypeControl: false,
   streetViewControl: false
@@ -104,18 +121,14 @@ var map = new google.maps.Map($("#map")[0], {
 var markers = [];
 
 map.controls[google.maps.ControlPosition.TOP_LEFT].push($("#clear-map")[0]);
-$("#clear-map").click(function() {
-  markers.forEach(function(marker) {
-    marker.setMap(null);
-  });
-  markers = [];
-});
+map.controls[google.maps.ControlPosition.TOP_RIGHT].push($("#permalink")[0]);
 
 // store location lookups in a database to prevent duplicate lookups
 var db = {};
 
 $("#submit").click(function() {
   var text = $("#trace").val();
+  $("#permalink").attr("href", "?trace="+encodeURIComponent(text));
   var hosts = [];
   var ips = [];
   text.split("\n").forEach(function(line) {
@@ -129,6 +142,8 @@ $("#submit").click(function() {
       }
     }
   });
+  var bounds = new google.maps.LatLngBounds();
+  var fitToMapTimer = null;
   hosts.forEach(function(host,i) {
     var ip = host["ip"];
 
@@ -146,7 +161,7 @@ $("#submit").click(function() {
       // draw lines
       if (hosts[i-1] && hosts[i-1]["loc"]) {
         // console.log("drawing line between", [ hosts[i-1]["loc"], host["loc"] ]);
-        var flightPath = new google.maps.Polyline({
+        var line = new google.maps.Polyline({
           map: map,
           path: [ hosts[i-1]["loc"], host["loc"] ],
           geodesic: true,
@@ -154,11 +169,11 @@ $("#submit").click(function() {
           strokeOpacity: 1.0,
           strokeWeight: 2
         });
-        markers.push(flightPath);
+        markers.push(line);
       }
       if (hosts[i+1] && hosts[i+1]["loc"]) {
         // console.log("drawing line between", [ host["loc"], hosts[i+1]["loc"] ]);
-        var flightPath = new google.maps.Polyline({
+        var line = new google.maps.Polyline({
           map: map,
           path: [ host["loc"], hosts[i+1]["loc"] ],
           geodesic: true,
@@ -166,8 +181,16 @@ $("#submit").click(function() {
           strokeOpacity: 1.0,
           strokeWeight: 2
         });
-        markers.push(flightPath);
+        markers.push(line);
       }
+
+      bounds.extend(marker.position);
+      if (fitToMapTimer) {
+        clearTimeout(fitToMapTimer);
+      }
+      fitToMapTimer = setTimeout(function() {
+        map.fitBounds(bounds);
+      }, 100);
     }
 
     if (db[ip]) {
@@ -195,6 +218,18 @@ $("#submit").click(function() {
       });
     }
   });
+});
+
+$("#clear-map").click(function() {
+  markers.forEach(function(marker) {
+    marker.setMap(null);
+  });
+  markers = [];
+});
+$("#permalink").click(function() {
+  if (this.href == "") {
+    alert("Please map a trace first.");
+  }
 });
 
 var qs = window.location.search;
