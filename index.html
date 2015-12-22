@@ -241,9 +241,13 @@ if (qs[0] == "?") {
     params[param[0]] = decodeURIComponent(param[1]);
   });
   if (params["trace"]) {
-    $("#trace").val(params["trace"]);
+    $("#trace").val(params["trace"].trim());
     $("#submit").click();
-    $("#map")[0].scrollIntoView();
+    setTimeout(function() {
+      if (markers.length > 0) {
+        $("#map")[0].scrollIntoView();
+      }
+    }, 200);
   }
 }
 
