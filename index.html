@@ -214,7 +214,7 @@ $("#submit").click(function() {
       }).fail(function(xhr) {
         console.log(xhr);
         err = (xhr.status == 429) ? "ipinfo.io ratelimit exhausted. Please try again tomorrow, or run the script from your own server." : "An error occurred.";
-        $("#submit").prop("disabled", true).removeClass("btn-primary").addClass("btn-danger").text(err);
+        $("#submit").removeClass("btn-primary").addClass("btn-danger").text(err);
       });
     }
   });
