@@ -98,7 +98,7 @@ a.map-btn:hover {
     <ul>
       <li>Made by <a href="https://stefansundin.github.io/">Stefan Sundin</a>.</li>
       <li>View <a href="https://github.com/stefansundin/traceroute-mapper">source code</a>.</li>
-      <li>Uses <a href="http://ipinfo.io/">ipinfo.io</a> and Google Maps API.</li>
+      <li>Uses <a href="https://ipinfo.io/">ipinfo.io</a> and Google Maps API.</li>
     </ul>
   </div>
 
@@ -108,11 +108,6 @@ a.map-btn:hover {
   </div>
 
 <script>
-// force http because otherwise ipinfo calls will throw mixed content errors :(
-if (window.location.protocol == "https:") {
-  window.location = "http:" + window.location.href.substring(6);
-}
-
 var map = new google.maps.Map($("#map")[0], {
   center: { lat: 35, lng: 0 },
   zoom: 2,
@@ -128,6 +123,7 @@ map.controls[google.maps.ControlPosition.TOP_RIGHT].push($("#permalink")[0]);
 var db = {};
 
 $("#submit").click(function() {
+  $(this).removeClass("btn-danger").addClass("btn-primary").text("Map it!");
   var text = $("#trace").val();
   $("#permalink").attr("href", "?trace="+encodeURIComponent(text));
   var hosts = [];
@@ -201,7 +197,7 @@ $("#submit").click(function() {
       }
     }
     else {
-      $.get("http://ipinfo.io/"+ip+"/loc", function(loc) {
+      $.get("https://ipinfo.io/"+ip+"/loc", function(loc) {
         loc = loc.trim();
         if (loc == "undefined") {
           db[ip] = loc;
@@ -213,7 +209,7 @@ $("#submit").click(function() {
         resolve();
       }).fail(function(xhr) {
         console.log(xhr);
-        err = (xhr.status == 429) ? "ipinfo.io ratelimit exhausted. Please try again tomorrow, or run the script from your own server." : "An error occurred.";
+        err = (xhr.status == 429) ? "ipinfo.io ratelimit exhausted. Please try again tomorrow, or run the script from your own server." : (xhr.status == 0) ? "Request not sent to ipinfo.io. Are you using an adblocker?" : "An error occurred.";
         $("#submit").removeClass("btn-primary").addClass("btn-danger").text(err);
       });
     }
