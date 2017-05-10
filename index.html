@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" integrity="sha384-pdapHxIh7EYuwy6K7iE41uXVxGCXY0sAjBzaElYGJUrzwodck3Lx6IE2lA0rFREo" crossorigin="anonymous">
   <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css" integrity="sha384-aUGj/X2zp5rLCbBxumKTCw2Z50WgIr1vs/PFN4praOTvYXWlVyh2UtNUU0KAUhAX" crossorigin="anonymous">
   <script src="https://code.jquery.com/jquery-2.1.4.min.js" integrity="sha384-R4/ztc4ZlRqWjqIuvf6RX5yb/v90qNGx6fS48N0tRxiGkqveZETq72KgDVJCp2TC" crossorigin="anonymous"></script>
-  <script src="https://maps.google.com/maps/api/js"></script>
+  <script src="https://maps.google.com/maps/api/js?key=AIzaSyD8u-pDbicQV7MfF4DWUHKG-leOdibx_KI"></script>
 <style>
 body {
   padding: 0 15px;
@@ -120,7 +120,44 @@ map.controls[google.maps.ControlPosition.TOP_LEFT].push($("#clear-map")[0]);
 map.controls[google.maps.ControlPosition.TOP_RIGHT].push($("#permalink")[0]);
 
 // store location lookups in a database to prevent duplicate lookups
-var db = {};
+var db = {
+  "213.248.97.17": { GeoLocateServerResult: "f7a2618f-52f1-4c31-85c7-97d5e8cda4e3" },
+  "130.242.85.89": { GeoLocateServerResult: "17d07c89-5dcb-47c0-92ee-aacca4494beb" },
+  "109.105.97.113": { GeoLocateServerResult: "f214b09c-58f8-4607-99c9-6a5a78f4b428" },
+  "109.105.102.93": { GeoLocateServerResult: "a70381e5-4264-4e71-a6bc-455a8bf564f2" },
+  "130.242.6.87": { GeoLocateServerResult: "6725a75d-bfb4-4821-8af7-20522568a617" },
+  "130.242.4.76": { GeoLocateServerResult: "e2060495-dc80-46cb-97e5-647aeee72ac1" },
+  "130.242.4.13": { GeoLocateServerResult: "d7126b2e-108f-486e-892f-22713909b210" },
+  "130.242.4.38": { GeoLocateServerResult: "488c904a-6e96-4eed-b062-353119954fb0" },
+  "130.242.4.48": { GeoLocateServerResult: "323c71d9-551f-4665-a087-da006ff7ed10" },
+  "130.242.4.72": { GeoLocateServerResult: "1442deb8-7959-4ec3-8505-8611c46e4b6e" },
+  "130.242.4.41": { GeoLocateServerResult: "5f8d8f26-5968-4531-95e4-da6b71d965e4" },
+  "130.242.4.70": { GeoLocateServerResult: "6e7e70e0-cfe1-464b-b656-4243be9c7c8f" },
+  "130.242.4.45": { GeoLocateServerResult: "abc8e16a-f2e2-4517-8a42-94015c4826ef" },
+  "109.105.102.123": { GeoLocateServerResult: "02aa06df-6df8-4c94-bf55-cda4f2eea38e" },
+  "109.105.97.138": { GeoLocateServerResult: "a18d59ed-1abe-4161-b7a7-2ad69d34f49e" },
+  "109.105.97.136": { GeoLocateServerResult: "fff77f7e-a090-4f02-8297-6f5650f1b561" },
+  "109.105.97.142": { GeoLocateServerResult: "9c61ac38-1060-460c-bbb8-9727b091666c" },
+  "109.105.97.134": { GeoLocateServerResult: "05b4256e-d75a-4d0f-beed-042fee9b782f" },
+  "109.105.97.81": { GeoLocateServerResult: "e9b18938-4160-4a0a-9660-cb791ea627d5" },
+  "198.32.176.208": { GeoLocateServerResult: "d4d0a505-6e1a-4bba-856b-a7d84bc3b7c3" },
+  "174.127.239.1": { GeoLocateServerResult: "fc16d549-ad9d-492e-83c8-af652ce3dc10" },
+  "174.127.155.60": { GeoLocateServerResult: "89702269-1520-443c-bef2-77380e9eff0d" },
+  "174.127.139.157": { GeoLocateServerResult: "ef421e7b-097c-44eb-bc2b-c839d8abf14f" },
+  "192.175.28.236": { GeoLocateServerResult: "a7d6e174-5d57-4239-9964-da52a04b1306" },
+  "62.115.118.169": { GeoLocateServerResult: "5f712df8-128d-4765-ac01-cea8e2d932cd" },
+  "213.248.94.126": { GeoLocateServerResult: "bff6b62c-4e34-4fef-b84b-2e5aa29e29b3" },
+  "62.115.125.2": { GeoLocateServerResult: "33f481f2-132d-4d71-8fc6-6b5d1dafef1d" },
+  "62.115.125.195": { GeoLocateServerResult: "82c8a3fb-5eba-4bbe-9deb-1f3f111a0816" },
+  "213.248.89.98": { GeoLocateServerResult: "d5806606-4803-4c2f-a684-007e3ec8177f" },
+  "219.158.102.85": { GeoLocateServerResult: "a1148125-918a-4568-a2af-011fcdda4760" },
+  "61.148.143.18": { GeoLocateServerResult: "5c6ca090-ca84-4a46-8c2c-8cadc6e9684e" },
+  "124.65.194.30": { GeoLocateServerResult: "01061212-7bc8-4bcd-8a04-55f3c763bd78" },
+  "210.74.176.238": { GeoLocateServerResult: "383cc941-c2a5-458e-a8ee-1f6948232ea6" },
+  "219.158.16.77": { GeoLocateServerResult: "1b2184d7-9fbd-4e92-8313-bf080a7afaae" },
+  "202.130.245.226": { GeoLocateServerResult: "34930a15-d1ad-4a26-ae38-e09b2d1a8746" },
+  "202.96.8.226": { GeoLocateServerResult: "52589946-139c-44ba-bb5d-c519ee0f5ba4" },
+};
 
 $("#submit").click(function() {
   $(this).removeClass("btn-danger").addClass("btn-primary").text("Map it!");
@@ -191,25 +228,41 @@ $("#submit").click(function() {
     }
 
     if (db[ip]) {
-      if (db[ip] != "undefined") {
-        host["loc"] = db[ip];
+      if (db[ip] == "undefined") {
+        return;
+      }
+      else if (db[ip].GetGeoLocateServerResultResult) {
+        var r = db[ip].GetGeoLocateServerResultResult;
+        db[ip].loc = host["loc"] = { lat: r.Latitude, lng: r.Longitude };
         resolve();
+      }
+      else if (db[ip].GeoLocateServerResult) {
+        $.get(`https://kong.speedcheckerapi.com:8443/GetGeoLocateServerResult?taskID=${db[ip].GeoLocateServerResult}&apikey=2d98765a-a342-1121-3138-1ac9cedc9f35`, function(resp) {
+          console.log(resp);
+          if (!resp.GetGeoLocateServerResultResult) {
+            db[ip] = "undefined";
+            console.log(ip, "error2", resp);
+            return;
+          }
+          var r = resp.GetGeoLocateServerResultResult;
+          db[ip].GetGeoLocateServerResultResult = r;
+          db[ip].loc = host["loc"] = { lat: r.Latitude, lng: r.Longitude };
+          resolve();
+        });
       }
     }
     else {
-      $.get("https://ipinfo.io/"+ip+"/loc", function(loc) {
-        loc = loc.trim();
-        if (loc == "undefined") {
-          db[ip] = loc;
+      $.get(`https://kong.speedcheckerapi.com:8443/GeoLocateServer?ip=${ip}&apikey=2d98765a-a342-1121-3138-1ac9cedc9f35`, function(resp) {
+        if (!resp.GeoLocateServerResult) {
+          db[ip] = "undefined";
+          console.log(ip, "error1", resp);
           return;
         }
-        var ll = loc.split(",").map(parseFloat);
-        console.log(i, ip, ll);
-        db[ip] = host["loc"] = { lat: ll[0], lng: ll[1] };
-        resolve();
+        console.log(`"${ip}": { GeoLocateServerResult: "${resp.GeoLocateServerResult}" },`);
+        db[ip] = { GeoLocateServerResult: resp.GeoLocateServerResult };
       }).fail(function(xhr) {
         console.log(xhr);
-        err = (xhr.status == 429) ? "ipinfo.io ratelimit exhausted. Please try again tomorrow, or run the script from your own server." : (xhr.status == 0) ? "Request not sent to ipinfo.io. Are you using an adblocker?" : "An error occurred.";
+        err = (xhr.status == 429) ? "ratelimit exhausted. Please try again tomorrow, or run the script from your own server." : (xhr.status == 0) ? "Request not sent. Are you using an adblocker?" : "An error occurred.";
         $("#submit").removeClass("btn-primary").addClass("btn-danger").text(err);
       });
     }
