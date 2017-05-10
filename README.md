@@ -8,7 +8,7 @@ Put this in your `.bash_profile`:
 
 ```bash
 function traceroute-mapper {
-  xdg-open "http://stefansundin.github.io/traceroute-mapper/?trace=$(traceroute -q1 $* | sed ':a;N;$!ba;s/\n/%0A/g')"
+  xdg-open "https://stefansundin.github.io/traceroute-mapper/?trace=$(traceroute -q1 $* | sed ':a;N;$!ba;s/\n/%0A/g')"
 }
 ```
 
@@ -21,7 +21,7 @@ Put this in your `.bash_profile`:
 
 ```bash
 function traceroute-mapper {
-  open "http://stefansundin.github.io/traceroute-mapper/?trace=$(traceroute -q1 $*)"
+  open "https://stefansundin.github.io/traceroute-mapper/?trace=$(traceroute -q1 $*)"
 }
 ```
 
