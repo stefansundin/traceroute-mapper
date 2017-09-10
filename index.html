@@ -133,7 +133,9 @@ $("#submit").click(function() {
     if (
       (r1=/^ *(\d+) /.exec(line)) !== null && (
         (r2=/\(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\)/.exec(line)) !== null ||
-        (r2=/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/.exec(line)) !== null
+        (r2=/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/.exec(line)) !== null ||
+        (r2=/\((?:[0-9a-f]{1,4}::?){1,7}[0-9a-f]{1,4}\)/.exec(line)) !== null ||
+        (r2=/\b(?:[0-9a-f]{1,4}::?){1,7}[0-9a-f]{1,4}\b/.exec(line)) !== null
       )
     ) {
       var n = parseInt(r1[1]);
