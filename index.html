@@ -130,9 +130,17 @@ $("#submit").click(function() {
   var ips = [];
   text.split("\n").forEach(function(line) {
     var r1, r2;
-    if ((r1=/^ *(\d+) /.exec(line)) !== null && (r2=/\(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\)/.exec(line)) !== null) {
+    if (
+      (r1=/^ *(\d+) /.exec(line)) !== null && (
+        (r2=/\(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\)/.exec(line)) !== null ||
+        (r2=/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/.exec(line)) !== null
+      )
+    ) {
       var n = parseInt(r1[1]);
-      var ip = r2[0].substring(1, r2[0].length-1);
+      var ip = r2[0];
+      if (ip[0] == "(") {
+        ip = ip.substring(1, r2[0].length-1);
+      }
       if (ips.indexOf(ip) === -1) {
         ips.push(ip);
         hosts.push({ n: n, ip: ip });
@@ -214,6 +222,9 @@ $("#submit").click(function() {
       });
     }
   });
+  if (hosts.length == 0) {
+    $("#submit").removeClass("btn-primary").addClass("btn-danger").text("Could not find any IP addresses in the input.");
+  }
 });
 
 $("#clear-map").click(function() {
