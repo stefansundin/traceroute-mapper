@@ -214,7 +214,17 @@ $("#submit").click(function() {
       }
     }
     else {
-      $.get("https://ipinfo.io/"+ip+"/loc", function(loc) {
+      let url = `https://ipinfo.io/${ip}/loc`;
+      if (window.location.host == "stefansundin.github.io") {
+        // please don't use my token on your fork!
+        // requests made without a token are limited based on domain name or source IP address, but will get less than 1000 requests/day (can't find good documentation on this)
+        // please get your own token by creating a free account at https://ipinfo.io/
+        // free accounts can make up to 1000 requests/day
+        // making requests from file:// seems to have unlimited quota!
+        url += "?token=5886e32e75537e";
+      }
+
+      $.get(url, function(loc) {
         loc = loc.trim();
         if (loc == "undefined") {
           db[ip] = loc;
@@ -227,7 +237,7 @@ $("#submit").click(function() {
       }).fail(function(xhr) {
         console.log(xhr);
         if (xhr.status == 404) return; // 404 is returned for private IP addresses like 192.168.1.1
-        err = (xhr.status == 429) ? "ipinfo.io ratelimit exhausted. Please try again tomorrow, or run the script from your own server." : (xhr.status == 0) ? "Request not sent to ipinfo.io. Are you using an adblocker?" : "An error occurred.";
+        err = (xhr.status == 429) ? "ipinfo.io ratelimit exhausted. Please try again tomorrow, or download and run this file from a file:// URL." : (xhr.status == 0) ? "Request not sent to ipinfo.io. Are you using an adblocker?" : "An error occurred.";
         $("#submit").removeClass("btn-primary").addClass("btn-danger").text(err);
       });
     }
@@ -290,7 +300,7 @@ $("#example").click(function() {
 19  61.148.143.18 (61.148.143.18)  368.667 ms\n\
 20  61.148.143.18 (61.148.143.18)  378.916 ms\n\
 21  210.74.176.238 (210.74.176.238)  424.108 ms\n\
-22  210.74.176.238 (210.74.176.238)  429.721 ms");
+22  210.74.176.238 (210.74.176.238)  428.721 ms");
   $("#submit").click();
 });
 
