@@ -156,101 +156,112 @@ $("#submit").click(function() {
       }
     }
   });
-  var bounds = new google.maps.LatLngBounds();
-  var fitToMapTimer = null;
-  hosts.forEach(function(host,i) {
-    var ip = host["ip"];
 
-    var resolve = function() {
-      // draw marker
-      var marker = new google.maps.Marker({
-        map: map,
-        position: host["loc"],
-        label: host["n"] > 9 ? "+" : host["n"].toString(),
-        title: host["n"]+": "+ip,
-        zIndex: host["n"]
-      });
-      markers.push(marker);
-
-      // draw lines
-      if (hosts[i-1] && hosts[i-1]["loc"]) {
-        // console.log("drawing line between", [ hosts[i-1]["loc"], host["loc"] ]);
-        var line = new google.maps.Polyline({
-          map: map,
-          path: [ hosts[i-1]["loc"], host["loc"] ],
-          geodesic: true,
-          strokeColor: "#FF0000",
-          strokeOpacity: 1.0,
-          strokeWeight: 2
-        });
-        markers.push(line);
-      }
-      if (hosts[i+1] && hosts[i+1]["loc"]) {
-        // console.log("drawing line between", [ host["loc"], hosts[i+1]["loc"] ]);
-        var line = new google.maps.Polyline({
-          map: map,
-          path: [ host["loc"], hosts[i+1]["loc"] ],
-          geodesic: true,
-          strokeColor: "#FF0000",
-          strokeOpacity: 1.0,
-          strokeWeight: 2
-        });
-        markers.push(line);
-      }
-
-      bounds.extend(marker.position);
-      if (fitToMapTimer) {
-        clearTimeout(fitToMapTimer);
-      }
-      fitToMapTimer = setTimeout(function() {
-        map.fitBounds(bounds);
-      }, 100);
-    }
-
-    if (db[ip]) {
-      if (db[ip] != "undefined") {
-        host["loc"] = db[ip];
-        resolve();
-      }
-    }
-    else {
-      let url = `https://ipinfo.io/${ip}/loc`;
-      if (window.location.host == "stefansundin.github.io") {
-        // please don't use my token on your fork!
-        // requests made without a token are limited based on domain name or source IP address, but will get less than 1000 requests/day (can't find good documentation on this)
-        // please get your own token by creating a free account at https://ipinfo.io/
-        // free accounts can make up to 1000 requests/day
-        // making requests from file:// seems to have unlimited quota!
-        url += "?token=5886e32e75537e";
-      }
-
-      fetch(url).then(response => {
-        if (response.ok) {
-          return response.text();
-        }
-        console.log(response);
-        throw new Error(response.status);
-      }).then(loc => {
-        loc = loc.trim();
-        if (loc == "undefined") {
-          db[ip] = loc;
-          return;
-        }
-        var ll = loc.split(",").map(parseFloat);
-        console.log(i, ip, ll);
-        db[ip] = host["loc"] = { lat: ll[0], lng: ll[1] };
-        resolve();
-      }).catch(error => {
-        console.error(error);
-        if (error.message == "404") return; // 404 is returned for private IP addresses like 192.168.1.1
-        err = (error.message == "429") ? "ipinfo.io ratelimit exhausted. Please try again tomorrow, or download and run this file from a file:// URL." : (error.message == "Failed to fetch") ? "Request not sent to ipinfo.io. Are you using an adblocker?" : "An error occurred.";
-        $("#submit").removeClass("btn-primary").addClass("btn-danger").text(err);
-      });
-    }
-  });
   if (hosts.length == 0) {
     $("#submit").removeClass("btn-primary").addClass("btn-danger").text("Could not find any IP addresses in the input.");
+    return;
   }
+
+  var draw = function() {
+    // draw markers
+    let bounds = new google.maps.LatLngBounds();
+    for (let i=0; i < hosts.length; i++) {
+      const host = hosts[i];
+      if (!db[host.ip]) continue;
+      const marker = new google.maps.Marker({
+        map: map,
+        position: db[host.ip],
+        label: host.n > 9 ? "+" : host.n.toString(),
+        title: `${host.n}: ${host.ip}`,
+        zIndex: host.n,
+      });
+      markers.push(marker);
+      bounds.extend(marker.position);
+    }
+    if (!bounds.isEmpty()) {
+      map.fitBounds(bounds);
+    }
+
+    // draw lines
+    for (let i=1; i < hosts.length; i++) {
+      const host1 = hosts[i-1];
+      const host2 = hosts[i];
+      if (!db[host1.ip] || !db[host2.ip]) continue;
+      // console.log("drawing line between", [ db[host1.ip], db[host2.ip] ]);
+      markers.push(new google.maps.Polyline({
+        map: map,
+        path: [ db[host1.ip], db[host2.ip] ],
+        geodesic: true,
+        strokeColor: "#FF0000",
+        strokeOpacity: 1.0,
+        strokeWeight: 2
+      }));
+    }
+  };
+
+  var requestBody = hosts.filter(host => {
+    return !(host.ip in db);
+  }).map(host => {
+    return `${host.ip}/loc`;
+  });
+
+  if (requestBody.length > 100) {
+    console.warn("Max 100 IPs in a batch request. TODO: Make multiple batch requests. For now you can just click the button multiple times, and then clear the map and click it a final time.");
+    requestBody = requestBody.slice(0, 100);
+  }
+
+  if (requestBody.length == 0) {
+    draw();
+    return;
+  }
+
+  if (window.location.host != "stefansundin.github.io") {
+    // please don't use my token on your fork!
+    // requests made without a token are limited based on domain name or source IP address, but will get less than 1000 requests/day (can't find good documentation on this)
+    // please get your own token by creating a free account at https://ipinfo.io/
+    // free accounts can make up to 1000 requests/day. note that batch requests still count every IP as a request.
+    // if you revert to an older version that doesn't use the batch API, then it seems like you can make an unlimited number of requests from file:// URLs
+    // try https://github.com/stefansundin/traceroute-mapper/tree/6e96144e61f01409157b2f4d7e4fbbfa4ac74d2f
+    $("#submit").removeClass("btn-primary").addClass("btn-danger").text("Please sign up and get an API token from ipinfo.io.");
+    return;
+  }
+
+  const url = `https://ipinfo.io/batch?token=5886e32e75537e`;
+  fetch(url, {
+    method: "POST",
+    headers: new Headers({
+      "Content-Type": "application/json",
+    }),
+    body: JSON.stringify(requestBody),
+  }).then(response => {
+    if (response.ok) {
+      return response.json();
+    }
+    console.log(response);
+    throw new Error(response.status);
+  }).then(data => {
+    // private IP addresses, like 192.168.1.1, will just be omitted from the response
+    Object.entries(data).forEach(entry => {
+      const ip = entry[0].split("/")[0];
+      const loc = entry[1].trim();
+      if (loc.startsWith("Rate limit exceeded.")) {
+        $("#submit").removeClass("btn-primary").addClass("btn-danger").text("ipinfo.io ratelimit exhausted. Please try again tomorrow.");
+        return;
+      }
+      if (loc == "undefined") {
+        db[ip] = loc;
+        return;
+      }
+      var ll = loc.split(",").map(parseFloat);
+      console.log(ip, ll);
+      db[ip] = { lat: ll[0], lng: ll[1] };
+    });
+    draw();
+  }).catch(error => {
+    console.error(error);
+    err = (error.message == "Failed to fetch" || error.message == "NetworkError when attempting to fetch resource.") ? "Request not sent to ipinfo.io. Are you using an adblocker?" : "An error occurred.";
+    $("#submit").removeClass("btn-primary").addClass("btn-danger").text(err);
+  });
 });
 
 $("#clear-map").click(function() {
