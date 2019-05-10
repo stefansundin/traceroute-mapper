@@ -12,7 +12,7 @@
   <link rel="icon" href="img/icon32.png">
   <link rel="license" href="https://www.gnu.org/licenses/gpl-3.0.html" title="GNU GPL v3 or later">
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-  <script src="https://code.jquery.com/jquery-3.4.0.min.js" integrity="sha384-JUMjoW8OzDJw4oFpWIB2Bu/c6768ObEthBMVSiIx4ruBIEdyNSUQAjJNFqT5pnJ6" crossorigin="anonymous"></script>
+  <script src="https://code.jquery.com/jquery-3.4.0.slim.min.js" integrity="sha384-7WBfQYubrFpye+dGHEeA3fHaTy/wpTFhxdjxqvK04e4orV3z+X4XC4qOX3qnkVC6" crossorigin="anonymous"></script>
   <script src="https://maps.google.com/maps/api/js?key=AIzaSyD8u-pDbicQV7MfF4DWUHKG-leOdibx_KI"></script>
 <style>
 body {
@@ -224,7 +224,13 @@ $("#submit").click(function() {
         url += "?token=5886e32e75537e";
       }
 
-      $.get(url, function(loc) {
+      fetch(url).then(response => {
+        if (response.ok) {
+          return response.text();
+        }
+        console.log(response);
+        throw new Error(response.status);
+      }).then(loc => {
         loc = loc.trim();
         if (loc == "undefined") {
           db[ip] = loc;
@@ -234,10 +240,10 @@ $("#submit").click(function() {
         console.log(i, ip, ll);
         db[ip] = host["loc"] = { lat: ll[0], lng: ll[1] };
         resolve();
-      }).fail(function(xhr) {
-        console.log(xhr);
-        if (xhr.status == 404) return; // 404 is returned for private IP addresses like 192.168.1.1
-        err = (xhr.status == 429) ? "ipinfo.io ratelimit exhausted. Please try again tomorrow, or download and run this file from a file:// URL." : (xhr.status == 0) ? "Request not sent to ipinfo.io. Are you using an adblocker?" : "An error occurred.";
+      }).catch(error => {
+        console.error(error);
+        if (error.message == "404") return; // 404 is returned for private IP addresses like 192.168.1.1
+        err = (error.message == "429") ? "ipinfo.io ratelimit exhausted. Please try again tomorrow, or download and run this file from a file:// URL." : (error.message == "Failed to fetch") ? "Request not sent to ipinfo.io. Are you using an adblocker?" : "An error occurred.";
         $("#submit").removeClass("btn-primary").addClass("btn-danger").text(err);
       });
     }
