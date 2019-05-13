@@ -111,7 +111,7 @@ a.map-btn:hover {
 
   <div class="hidden">
     <div class="map-btn" id="clear-map">Clear map</div>
-    <a class="map-btn" id="permalink">Permalink <span class="glyphicon glyphicon-share"></span></a>
+    <a class="map-btn" id="permalink">Permalink</a>
   </div>
 
 <script>
@@ -150,7 +150,7 @@ $("#submit").click(function() {
       if (ip[0] == "(") {
         ip = ip.substring(1, r2[0].length-1);
       }
-      if (ips.indexOf(ip) === -1) {
+      if (!ips.includes(ip)) {
         ips.push(ip);
         hosts.push({ n: n, ip: ip });
       }
@@ -311,7 +311,7 @@ $("#example").click(function() {
 13  ash-bb4-link.telia.net (213.155.133.9)  126.166 ms\n\
 14  las-b3-link.telia.net (213.155.137.59)  194.745 ms\n\
 15  219.158.102.81 (219.158.102.81)  369.420 ms\n\
-16  219.158.102.81 (219.158.102.81)  385.404 ms\n\
+16  219.158.102.81 (219.158.102.81)  385.420 ms\n\
 17  219.158.98.145 (219.158.98.145)  387.710 ms\n\
 18  124.65.194.82 (124.65.194.82)  368.584 ms\n\
 19  61.148.143.18 (61.148.143.18)  368.667 ms\n\

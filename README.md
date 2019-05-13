@@ -4,7 +4,7 @@ Run it from your terminal:
 
 ### Linux
 
-Put this in your `.bash_profile`:
+Put this in your `.bashrc`:
 
 ```bash
 function traceroute-mapper {
