@@ -243,12 +243,14 @@ $("#submit").click(function() {
   }).then(data => {
     // private IP addresses, like 192.168.1.1, will just be omitted from the response
     Object.entries(data).forEach(entry => {
-      const ip = entry[0].split("/")[0];
-      const loc = entry[1].trim();
-      if (loc.startsWith("Rate limit exceeded.")) {
-        $("#submit").removeClass("btn-primary").addClass("btn-danger").text("ipinfo.io ratelimit exhausted. Please try again tomorrow.");
+      if (entry[1].error) {
+        $("#submit").attr("class","form-control btn btn-danger").text(
+          (entry[1].error.title == "Rate limit exceeded") ? "ipinfo.io ratelimit exhausted. Please try again tomorrow." : `Error: ${entry[1].error.title}`
+        );
         return;
       }
+      const ip = entry[0].split("/")[0];
+      const loc = entry[1].trim();
       if (loc == "undefined") {
         db[ip] = loc;
         return;
