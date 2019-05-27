@@ -131,7 +131,6 @@ map.controls[google.maps.ControlPosition.TOP_RIGHT].push($("#permalink")[0]);
 var db = {};
 
 $("#submit").click(function() {
-  $(this).removeClass("btn-danger").addClass("btn-primary").text("Map it!");
   var text = $("#trace").val();
   $("#permalink").attr("href", "?trace="+encodeURIComponent(text));
   var hosts = [];
@@ -159,9 +158,10 @@ $("#submit").click(function() {
   });
 
   if (hosts.length == 0) {
-    $("#submit").removeClass("btn-primary").addClass("btn-danger").text("Could not find any IP addresses in the input.");
+    $(this).attr("class","form-control btn btn-danger").text("Could not find any IP addresses in the input.");
     return;
   }
+  $(this).attr("class","form-control btn btn-info").text("Working...");
 
   var draw = function() {
     // draw markers
@@ -223,7 +223,7 @@ $("#submit").click(function() {
     // free accounts can make up to 1000 requests/day. note that batch requests still count every IP as a request.
     // if you revert to an older version that doesn't use the batch API, then it seems like you can make an unlimited number of requests from file:// URLs
     // try https://github.com/stefansundin/traceroute-mapper/tree/6e96144e61f01409157b2f4d7e4fbbfa4ac74d2f
-    $("#submit").removeClass("btn-primary").addClass("btn-danger").text("Please sign up and get an API token from ipinfo.io.");
+    $(this).attr("class","form-control btn btn-danger").text("Please sign up and get an API token from ipinfo.io.");
     return;
   }
 
@@ -241,6 +241,7 @@ $("#submit").click(function() {
     console.log(response);
     throw new Error(response.status);
   }).then(data => {
+    $("#submit").attr("class","form-control btn btn-primary").text("Map it!");
     // private IP addresses, like 192.168.1.1, will just be omitted from the response
     Object.entries(data).forEach(entry => {
       if (entry[1].error) {
@@ -263,7 +264,7 @@ $("#submit").click(function() {
   }).catch(error => {
     console.error(error);
     err = (error.message == "Failed to fetch" || error.message == "NetworkError when attempting to fetch resource.") ? "Request not sent to ipinfo.io. Are you using an adblocker?" : "An error occurred.";
-    $("#submit").removeClass("btn-primary").addClass("btn-danger").text(err);
+    $("#submit").attr("class","form-control btn btn-danger").text(err);
   });
 });
 
