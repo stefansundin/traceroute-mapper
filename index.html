@@ -150,6 +150,21 @@ $("#submit").click(function() {
       if (ip[0] == "(") {
         ip = ip.substring(1, r2[0].length-1);
       }
+      // Filter out RFC1918 private IP ranges
+      // ipinfo returns an "Invalid Token" error on these
+      // Maybe some IPv6 addresses should also be filtered?
+      if (ip.startsWith("10.") || ip.startsWith("192.168.")) {
+        console.warn("Skipping private IP", ip);
+        return;
+      }
+      else if (ip.startsWith("172.")) {
+        var byte = parseInt(ip.split(".")[1], 10);
+        if (byte >= 16 && byte < 32) {
+          console.warn("Skipping private IP", ip);
+          return;
+        }
+      }
+      // Add IP to hosts if not already present
       if (!ips.includes(ip)) {
         ips.push(ip);
         hosts.push({ n: n, ip: ip });
@@ -238,13 +253,18 @@ $("#submit").click(function() {
     if (response.ok) {
       return response.json();
     }
-    console.log(response);
+    console.error(response);
     throw new Error(response.status);
   }).then(data => {
     $("#submit").attr("class","form-control btn btn-primary").text("Map it!");
-    // private IP addresses, like 192.168.1.1, will just be omitted from the response
     Object.entries(data).forEach(entry => {
       if (entry[1].error) {
+        console.error(entry[0], entry[1].error);
+        // Do not report some errors in the button text
+        if (entry[1].error.title == "Invalid Token") {
+          return;
+        }
+        // Report error in the button text
         $("#submit").attr("class","form-control btn btn-danger").text(
           (entry[1].error.title == "Rate limit exceeded") ? "ipinfo.io ratelimit exhausted. Please try again tomorrow." : `Error: ${entry[1].error.title}`
         );
