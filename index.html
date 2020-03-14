@@ -213,7 +213,6 @@ $("#submit").click(function() {
     $(this).attr("class","form-control btn btn-danger").text("Could not find any IP addresses in the input.");
     return;
   }
-  $(this).attr("class","form-control btn btn-info").text("Working...");
 
   let requestBody = hosts.filter(host => !(host.ip in db)).map(host => `${host.ip}/loc`);
   if (requestBody.length > 100) {
@@ -236,6 +235,8 @@ $("#submit").click(function() {
     $(this).attr("class","form-control btn btn-danger").text("Please sign up and get an API token from ipinfo.io.");
     return;
   }
+
+  $(this).attr("class","form-control btn btn-info").text("Working...");
 
   const url = `https://ipinfo.io/batch?token=5886e32e75537e`;
   fetch(url, {
