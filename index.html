@@ -130,6 +130,43 @@ map.controls[google.maps.ControlPosition.TOP_RIGHT].push($("#permalink")[0]);
 // store location lookups in a database to prevent duplicate lookups
 var db = {};
 
+function draw(hosts) {
+  hosts = hosts.filter(host => host.ip in db);
+
+  // draw markers
+  let bounds = new google.maps.LatLngBounds();
+  for (let i=0; i < hosts.length; i++) {
+    const host = hosts[i];
+    const marker = new google.maps.Marker({
+      map: map,
+      position: db[host.ip],
+      label: host.n > 9 ? "+" : host.n.toString(),
+      title: `${host.n}: ${host.ip}`,
+      zIndex: host.n,
+    });
+    markers.push(marker);
+    bounds.extend(marker.position);
+  }
+  if (!bounds.isEmpty()) {
+    map.fitBounds(bounds);
+  }
+
+  // draw lines
+  for (let i=1; i < hosts.length; i++) {
+    const host1 = hosts[i-1];
+    const host2 = hosts[i];
+    // console.log("drawing line between", [ db[host1.ip], db[host2.ip] ]);
+    markers.push(new google.maps.Polyline({
+      map: map,
+      path: [ db[host1.ip], db[host2.ip] ],
+      geodesic: true,
+      strokeColor: "#FF0000",
+      strokeOpacity: 1.0,
+      strokeWeight: 2
+    }));
+  }
+}
+
 $("#submit").click(function() {
   var text = $("#trace").val();
   $("#permalink").attr("href", "?trace="+encodeURIComponent(text));
@@ -178,56 +215,14 @@ $("#submit").click(function() {
   }
   $(this).attr("class","form-control btn btn-info").text("Working...");
 
-  var draw = function() {
-    // draw markers
-    let bounds = new google.maps.LatLngBounds();
-    for (let i=0; i < hosts.length; i++) {
-      const host = hosts[i];
-      if (!db[host.ip]) continue;
-      const marker = new google.maps.Marker({
-        map: map,
-        position: db[host.ip],
-        label: host.n > 9 ? "+" : host.n.toString(),
-        title: `${host.n}: ${host.ip}`,
-        zIndex: host.n,
-      });
-      markers.push(marker);
-      bounds.extend(marker.position);
-    }
-    if (!bounds.isEmpty()) {
-      map.fitBounds(bounds);
-    }
-
-    // draw lines
-    for (let i=1; i < hosts.length; i++) {
-      const host1 = hosts[i-1];
-      const host2 = hosts[i];
-      if (!db[host1.ip] || !db[host2.ip]) continue;
-      // console.log("drawing line between", [ db[host1.ip], db[host2.ip] ]);
-      markers.push(new google.maps.Polyline({
-        map: map,
-        path: [ db[host1.ip], db[host2.ip] ],
-        geodesic: true,
-        strokeColor: "#FF0000",
-        strokeOpacity: 1.0,
-        strokeWeight: 2
-      }));
-    }
-  };
-
-  var requestBody = hosts.filter(host => {
-    return !(host.ip in db);
-  }).map(host => {
-    return `${host.ip}/loc`;
-  });
-
+  let requestBody = hosts.filter(host => !(host.ip in db)).map(host => `${host.ip}/loc`);
   if (requestBody.length > 100) {
     console.warn("Max 100 IPs in a batch request. TODO: Make multiple batch requests. For now you can just click the button multiple times, and then clear the map and click it a final time.");
     requestBody = requestBody.slice(0, 100);
   }
 
   if (requestBody.length == 0) {
-    draw();
+    draw(hosts);
     return;
   }
 
@@ -280,7 +275,7 @@ $("#submit").click(function() {
       console.log(ip, ll);
       db[ip] = { lat: ll[0], lng: ll[1] };
     });
-    draw();
+    draw(hosts);
   }).catch(error => {
     console.error(error);
     err = (error.message == "Failed to fetch" || error.message == "NetworkError when attempting to fetch resource.") ? "Request not sent to ipinfo.io. Are you using an adblocker?" : "An error occurred.";
