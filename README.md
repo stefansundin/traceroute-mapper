@@ -12,7 +12,7 @@ function traceroute-mapper {
 }
 ```
 
-Then simply run: `traceroute-mapper google.com`
+Then simply run: `traceroute-mapper example.com`
 
 
 ### Mac
@@ -25,11 +25,11 @@ function traceroute-mapper {
 }
 ```
 
-Then simply run: `traceroute-mapper google.com`
+Then simply run: `traceroute-mapper example.com`
 
 
 ### Windows
 
 Put [traceroute-mapper.bat](https://stefansundin.github.io/traceroute-mapper/traceroute-mapper.bat) in your `%PATH%` (e.g. `C:\Windows\`).
 
-Then open cmd and run: `traceroute-mapper google.com`
+Then open cmd and run: `traceroute-mapper example.com`
