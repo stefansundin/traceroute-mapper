@@ -171,42 +171,81 @@ function draw(hosts) {
 $("#submit").click(function() {
   const text = $("#trace").val();
   $("#permalink").attr("href", "?trace="+encodeURIComponent(text));
+  let data;
+  try {
+    // jc support - https://github.com/kellyjonbrazil/jc
+    data = JSON.parse(text);
+  } catch {
+    data = {
+      destination_ip: null,
+      destination_name: null,
+      hops: [],
+    };
+    const lines = text.split("\n");
+    const re = /traceroute6? to (\S+) \((\S+)\)/.exec(lines[0]);
+    if (re) {
+      data.destination_ip = re[2];
+      data.destination_name = re[1];
+    }
+    lines.forEach(function(line) {
+      let r1, r2;
+      if (
+        (r1=/^ *(\d+) /.exec(line)) !== null && (
+          (r2=/\(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\)/.exec(line)) !== null ||
+          (r2=/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/.exec(line)) !== null ||
+          (r2=/\((?:[0-9a-f]{1,4}::?){1,7}[0-9a-f]{1,4}\)/.exec(line)) !== null ||
+          (r2=/\b(?:[0-9a-f]{1,4}::?){1,7}[0-9a-f]{1,4}\b/.exec(line)) !== null
+        )
+      ) {
+        const n = parseInt(r1[1]);
+        let ip = r2[0];
+        if (ip[0] === "(") {
+          ip = ip.substring(1, r2[0].length-1);
+        }
+        data.hops.push({
+          hop: n,
+          probes: [
+            {
+              annotation: null,
+              asn: null,
+              ip: ip,
+              name: "TODO",
+              rtt: 12.34
+            }
+          ]
+        });
+      }
+    });
+    console.log(data);
+  }
+
   let hosts = [];
   let ips = [];
-  text.split("\n").forEach(function(line) {
-    let r1, r2;
-    if (
-      (r1=/^ *(\d+) /.exec(line)) !== null && (
-        (r2=/\(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\)/.exec(line)) !== null ||
-        (r2=/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/.exec(line)) !== null ||
-        (r2=/\((?:[0-9a-f]{1,4}::?){1,7}[0-9a-f]{1,4}\)/.exec(line)) !== null ||
-        (r2=/\b(?:[0-9a-f]{1,4}::?){1,7}[0-9a-f]{1,4}\b/.exec(line)) !== null
-      )
-    ) {
-      const n = parseInt(r1[1]);
-      let ip = r2[0];
-      if (ip[0] === "(") {
-        ip = ip.substring(1, r2[0].length-1);
-      }
-      // Filter out RFC1918 private IP ranges
-      // ipinfo returns an "Invalid Token" error on these
-      // Maybe some IPv6 addresses should also be filtered?
-      if (ip.startsWith("10.") || ip.startsWith("192.168.")) {
+
+  data.hops.forEach(function(hop, n) {
+    if (!hop.probes[0]) {
+      return;
+    }
+    const ip = hop.probes[0]["ip"];
+
+    // Filter out RFC1918 private IP ranges
+    // ipinfo returns an "Invalid Token" error on these
+    // Maybe some IPv6 addresses should also be filtered?
+    if (ip.startsWith("10.") || ip.startsWith("192.168.")) {
+      console.warn("Skipping private IP", ip);
+      return;
+    }
+    else if (ip.startsWith("172.")) {
+      const byte = parseInt(ip.split(".")[1], 10);
+      if (byte >= 16 && byte < 32) {
         console.warn("Skipping private IP", ip);
         return;
       }
-      else if (ip.startsWith("172.")) {
-        const byte = parseInt(ip.split(".")[1], 10);
-        if (byte >= 16 && byte < 32) {
-          console.warn("Skipping private IP", ip);
-          return;
-        }
-      }
-      // Add IP to hosts if not already present
-      if (!ips.includes(ip)) {
-        ips.push(ip);
-        hosts.push({ n: n, ip: ip });
-      }
+    }
+    // Add IP to hosts if not already present
+    if (!ips.includes(ip)) {
+      ips.push(ip);
+      hosts.push({ n: n, ip: ip });
     }
   });
 
