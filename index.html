@@ -185,7 +185,7 @@ $("#submit").click(function() {
     ) {
       const n = parseInt(r1[1]);
       let ip = r2[0];
-      if (ip[0] == "(") {
+      if (ip[0] === "(") {
         ip = ip.substring(1, r2[0].length-1);
       }
       // Filter out RFC1918 private IP ranges
@@ -210,7 +210,7 @@ $("#submit").click(function() {
     }
   });
 
-  if (hosts.length == 0) {
+  if (hosts.length === 0) {
     $(this).attr("class","form-control btn btn-danger").text("Could not find any IP addresses in the input.");
     return;
   }
@@ -221,12 +221,12 @@ $("#submit").click(function() {
     requestBody = requestBody.slice(0, 100);
   }
 
-  if (requestBody.length == 0) {
+  if (requestBody.length === 0) {
     draw(hosts);
     return;
   }
 
-  if (window.location.host != "stefansundin.github.io") {
+  if (window.location.host !== "stefansundin.github.io") {
     // please don't use my token on your fork!
     // requests made without a token are limited based on domain name or source IP address, but will get less than 1000 requests/day (can't find good documentation on this)
     // please get your own token by creating a free account at https://ipinfo.io/
@@ -258,18 +258,18 @@ $("#submit").click(function() {
       if (entry[1].error) {
         console.error(entry[0], entry[1].error);
         // Do not report some errors in the button text
-        if (entry[1].error.title == "Invalid Token") {
+        if (entry[1].error.title === "Invalid Token") {
           return;
         }
         // Report error in the button text
         $("#submit").attr("class","form-control btn btn-danger").text(
-          (entry[1].error.title == "Rate limit exceeded") ? "ipinfo.io ratelimit exhausted. Please try again tomorrow." : `Error: ${entry[1].error.title}`
+          (entry[1].error.title === "Rate limit exceeded") ? "ipinfo.io ratelimit exhausted. Please try again tomorrow." : `Error: ${entry[1].error.title}`
         );
         return;
       }
       const ip = entry[0].split("/")[0];
       const loc = entry[1].trim();
-      if (loc == "undefined") {
+      if (loc === "undefined") {
         db[ip] = loc;
         return;
       }
@@ -280,7 +280,7 @@ $("#submit").click(function() {
     draw(hosts);
   }).catch(error => {
     console.error(error);
-    let err = (error.message == "Failed to fetch" || error.message == "NetworkError when attempting to fetch resource.") ? "Request not sent to ipinfo.io. Are you using an adblocker?" : "An error occurred.";
+    let err = (error.message === "Failed to fetch" || error.message === "NetworkError when attempting to fetch resource.") ? "Request not sent to ipinfo.io. Are you using an adblocker?" : "An error occurred.";
     $("#submit").attr("class","form-control btn btn-danger").text(err);
   });
 });
@@ -292,13 +292,13 @@ $("#clear-map").click(function() {
   markers = [];
 });
 $("#permalink").click(function() {
-  if (this.href == "") {
+  if (this.href === "") {
     alert("Please map a trace first.");
   }
 });
 
 const qs = window.location.search;
-if (qs[0] == "?") {
+if (qs[0] === "?") {
   let params = {};
   qs.substr(1).split("&").forEach(function(param) {
     param = param.split("=");
