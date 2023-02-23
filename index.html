@@ -1,347 +1,521 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Traceroute mapper</title>
+    <head>
+        <title>Traceroute mapper</title>
 
-  <meta charset="utf-8">
-  <meta name="author" content="Stefan Sundin">
-  <meta name="description" content="Visualize traceroute on a map.">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="referrer" content="origin">
+        <meta charset="utf-8" />
+        <meta name="author" content="Gajraj Singh Chouhan" />
+        <meta name="description" content="Visualize traceroute on a map." />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="referrer" content="origin" />
 
-  <link rel="icon" href="img/icon32.png">
-  <link rel="license" href="https://www.gnu.org/licenses/gpl-3.0.html" title="GNU GPL v3 or later">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
-  <script src="https://code.jquery.com/jquery-3.6.3.slim.min.js" integrity="sha256-ZwqZIVdD3iXNyGHbSYdsmWP//UBokj2FHAxKuSBKDSo=" crossorigin="anonymous"></script>
-  <!-- You have to replace this Google Maps API key with your own: -->
-  <script src="https://maps.google.com/maps/api/js?key=AIzaSyD8u-pDbicQV7MfF4DWUHKG-leOdibx_KI"></script>
-<style>
-body {
-  padding: 0 15px;
-  margin-bottom: 100px;
-}
-a {
-  cursor: pointer;
-}
-.container {
-  padding: 0;
-}
-@media (min-width: 768px) {
-  .container {
-    max-width: 770px;
-  }
-}
-#example {
-  color: #337ab7;
-}
-#example:hover {
-  color: #23527c;
-  text-decoration: underline;
-}
+        <link rel="icon" href="img/icon32.png" />
+        <link
+            rel="license"
+            href="https://www.gnu.org/licenses/gpl-3.0.html"
+            title="GNU GPL v3 or later"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
+            integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N"
+            crossorigin="anonymous"
+        />
+        <script
+            src="https://code.jquery.com/jquery-3.6.3.slim.min.js"
+            integrity="sha256-ZwqZIVdD3iXNyGHbSYdsmWP//UBokj2FHAxKuSBKDSo="
+            crossorigin="anonymous"
+        ></script>
 
-header {
-  margin-top: 25px;
-  text-align: center;
-}
-header a {
-  color: black;
-}
-header a:hover {
-  color: black;
-  cursor: default;
-  text-decoration: none;
-}
-header a:focus {
-  color: black;
-  text-decoration: none;
-}
-h2 {
-  border-bottom: 1px solid #ccc;
-}
-textarea {
-  font-family: monospace;
-  min-height: 200px;
-  resize: vertical;
-}
-#map {
-  height: 500px;
-  margin: 1em 0;
-}
-.map-btn {
-  background-color: white;
-  border: 2px solid white;
-  border-radius: 3px;
-  box-shadow: 0 2px 6px rgba(0,0,0,.3);
-  cursor: pointer;
-  margin: 8px;
-  text-align: center;
-  color: rgb(25,25,25);
-  font-family: Roboto, Arial, sans-serif;
-  font-size: 13px;
-  line-height: 20px;
-  padding: 4px 6px;
-}
-a.map-btn:hover {
-  text-decoration: none;
-}
-</style>
-</head>
-<body>
-  <header>
-    <h1 itemprop="name"><a href="/traceroute-mapper/">Traceroute mapper</a></h1>
-  </header>
+        <!-- Load Leaflet from CDN-->
+        <link
+            rel="stylesheet"
+            href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+            integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI="
+            crossorigin=""
+        />
+        <script
+            src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+            integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM="
+            crossorigin=""
+        ></script>
 
-  <div class="container">
-    <hr>
-    <p>Run <code>traceroute</code> on your local machine, then paste the output here to map the route. <a id="example">Show example.</a></p>
-    <p>Thanks to <a href="https://ipinfo.io/">ipinfo.io</a> for supporting this project.</p>
-    <p><textarea class="form-control" id="trace" placeholder="traceroute to ..." spellcheck="false"></textarea></p>
-    <p><button class="form-control btn btn-primary" id="submit">Map it!</button></p>
-    <div id="map"></div>
-    <h2>Tips</h2>
-    <p>Linux: <code>traceroute -I -q1 example.com | xclip -sel clip</code></p>
-    <p>Mac: <code>traceroute -I -q1 example.com | pbcopy</code></p>
-    <p>Windows: <code>tracert example.com | clip</code></p>
-    <p><a href="https://github.com/stefansundin/traceroute-mapper#traceroute-mapper">Open from your terminal!</a></p>
-    <hr>
-    <ul>
-      <li>Made by <a href="https://stefansundin.github.io/">Stefan Sundin</a>.</li>
-      <li>View <a href="https://github.com/stefansundin/traceroute-mapper">source code</a>.</li>
-      <li>Uses <a href="https://ipinfo.io/">ipinfo.io</a> and Google Maps API.</li>
-    </ul>
-  </div>
+        <link
+            rel="stylesheet"
+            href="https://unpkg.com/leaflet/dist/leaflet.css"
+        />
+        <script src="https://unpkg.com/leaflet/dist/leaflet-src.js"></script>
 
-  <div class="d-none">
-    <div class="map-btn" id="clear-map">Clear map</div>
-    <a class="map-btn" id="permalink">Permalink</a>
-  </div>
+        <!-- Awesome Number Markers -->
+        <link rel="stylesheet" href="leaflet_awesome_number_markers.css" />
+        <script src="leaflet_awesome_number_markers.js"></script>
 
-<script>
-let map = new google.maps.Map($("#map")[0], {
-  center: { lat: 35, lng: 0 },
-  zoom: 2,
-  mapTypeControl: false,
-  streetViewControl: false
-});
-let markers = [];
+        <!-- Datatable -->
+        <link
+            rel="stylesheet"
+            type="text/css"
+            href="https://cdn.datatables.net/1.13.2/css/jquery.dataTables.css"
+        />
 
-map.controls[google.maps.ControlPosition.TOP_LEFT].push($("#clear-map")[0]);
-map.controls[google.maps.ControlPosition.TOP_RIGHT].push($("#permalink")[0]);
+        <script
+            type="text/javascript"
+            charset="utf8"
+            src="https://cdn.datatables.net/1.13.2/js/jquery.dataTables.js"
+        ></script>
+        <style>
+            body {
+                padding: 0 15px;
+                margin-bottom: 100px;
+            }
+            a {
+                cursor: pointer;
+            }
+            .container {
+                padding: 0;
+            }
+            @media (min-width: 768px) {
+                .container {
+                    max-width: 770px;
+                }
+            }
+            #example {
+                color: #337ab7;
+            }
+            #example:hover {
+                color: #23527c;
+                text-decoration: underline;
+            }
 
-// store location lookups in a database to prevent duplicate lookups
-let db = {};
+            header {
+                margin-top: 25px;
+                text-align: center;
+            }
+            header a {
+                color: black;
+            }
+            header a:hover {
+                color: black;
+                cursor: default;
+                text-decoration: none;
+            }
+            header a:focus {
+                color: black;
+                text-decoration: none;
+            }
+            h2 {
+                border-bottom: 1px solid #ccc;
+            }
+            textarea {
+                font-family: monospace;
+                min-height: 200px;
+                resize: vertical;
+            }
+            #map {
+                height: 500px;
+                margin: 1em 0;
+            }
+            .map-btn {
+                background-color: white;
+                border: 2px solid white;
+                border-radius: 3px;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+                cursor: pointer;
+                margin: 8px;
+                text-align: center;
+                color: rgb(25, 25, 25);
+                font-family: Roboto, Arial, sans-serif;
+                font-size: 13px;
+                line-height: 20px;
+                padding: 4px 6px;
+            }
+            a.map-btn:hover {
+                text-decoration: none;
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <h1 itemprop="name">
+                <a href="/traceroute-mapper/">Traceroute mapper</a>
+            </h1>
+        </header>
 
-function draw(hosts) {
-  hosts = hosts.filter(host => host.ip in db);
+        <div class="container">
+            <hr />
+            <p>
+                Run <code>traceroute</code> on your local machine, then paste
+                the output here to map the route.
+                <a id="example">Show example.</a>
+            </p>
+            <p>
+                Thanks to <a href="https://ipinfo.io/">ipinfo.io</a> for
+                supporting this project.
+            </p>
+            <p>
+                <textarea
+                    class="form-control"
+                    id="trace"
+                    placeholder="traceroute to ..."
+                    spellcheck="false"
+                ></textarea>
+            </p>
+            <p>
+                <button class="form-control btn btn-primary" id="submit">
+                    Map it!
+                </button>
+            </p>
+            <div>
+                <table id="h-table" class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>IP</th>
+                            <th>City</th>
+                            <th>Country</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hosts"></tbody>
+                </table>
+                <div id="map"></div>
+            </div>
+            <h2>Tips</h2>
+            <p>
+                Linux:
+                <code>traceroute -I -q1 example.com | xclip -sel clip</code>
+            </p>
+            <p>Mac: <code>traceroute -I -q1 example.com | pbcopy</code></p>
+            <p>Windows: <code>tracert example.com | clip</code></p>
+            <p>
+                <a
+                    href="https://github.com/stefansundin/traceroute-mapper#traceroute-mapper"
+                    >Open from your terminal!</a
+                >
+            </p>
+            <hr />
+            <ul>
+                <li>
+                    Made by
+                    <a href="https://stefansundin.github.io/">Stefan Sundin</a>.
+                </li>
+                <li>
+                    View
+                    <a href="https://github.com/stefansundin/traceroute-mapper"
+                        >source code</a
+                    >.
+                </li>
+                <li>
+                    Uses <a href="https://ipinfo.io/">ipinfo.io</a> and Google
+                    Maps API.
+                </li>
+            </ul>
+        </div>
 
-  // draw markers
-  let bounds = new google.maps.LatLngBounds();
-  for (let i=0; i < hosts.length; i++) {
-    const host = hosts[i];
-    const marker = new google.maps.Marker({
-      map: map,
-      position: db[host.ip],
-      label: host.n > 9 ? "+" : host.n.toString(),
-      title: `${host.n}: ${host.ip}`,
-      zIndex: host.n,
-    });
-    markers.push(marker);
-    bounds.extend(marker.position);
-  }
-  if (!bounds.isEmpty()) {
-    map.fitBounds(bounds);
-  }
+        <div class="d-none">
+            <div class="map-btn" id="clear-map">Clear map</div>
+            <a class="map-btn" id="permalink">Permalink</a>
+        </div>
 
-  // draw lines
-  for (let i=1; i < hosts.length; i++) {
-    const host1 = hosts[i-1];
-    const host2 = hosts[i];
-    // console.log("drawing line between", [ db[host1.ip], db[host2.ip] ]);
-    markers.push(new google.maps.Polyline({
-      map: map,
-      path: [ db[host1.ip], db[host2.ip] ],
-      geodesic: true,
-      strokeColor: "#FF0000",
-      strokeOpacity: 1.0,
-      strokeWeight: 2
-    }));
-  }
-}
+        <script>
+            $(document).ready(function () {
+                var table = $("#h-table").DataTable();
 
-$("#submit").click(function() {
-  const text = $("#trace").val();
-  $("#permalink").attr("href", "?trace="+encodeURIComponent(text));
-  let hosts = [];
-  let ips = [];
-  text.split("\n").forEach(function(line) {
-    let r1, r2;
-    if (
-      (r1=/^ *(\d+) /.exec(line)) !== null && (
-        (r2=/\(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\)/.exec(line)) !== null ||
-        (r2=/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/.exec(line)) !== null ||
-        (r2=/\((?:[0-9a-f]{1,4}::?){1,7}[0-9a-f]{1,4}\)/.exec(line)) !== null ||
-        (r2=/\b(?:[0-9a-f]{1,4}::?){1,7}[0-9a-f]{1,4}\b/.exec(line)) !== null
-      )
-    ) {
-      const n = parseInt(r1[1]);
-      let ip = r2[0];
-      if (ip[0] === "(") {
-        ip = ip.substring(1, r2[0].length-1);
-      }
-      // Filter out RFC1918 private IP ranges
-      // ipinfo returns an "Invalid Token" error on these
-      // Maybe some IPv6 addresses should also be filtered?
-      if (ip.startsWith("10.") || ip.startsWith("192.168.")) {
-        console.warn("Skipping private IP", ip);
-        return;
-      }
-      else if (ip.startsWith("172.")) {
-        const byte = parseInt(ip.split(".")[1], 10);
-        if (byte >= 16 && byte < 32) {
-          console.warn("Skipping private IP", ip);
-          return;
-        }
-      }
-      // Add IP to hosts if not already present
-      if (!ips.includes(ip)) {
-        ips.push(ip);
-        hosts.push({ n: n, ip: ip });
-      }
-    }
-  });
+                let hTable = document.getElementById("h-table");
+                let hostsDiv = document.getElementById("hosts");
+                function addHost(host) {
+                    table.row
+                        .add([
+                            host.n,
+                            host.ip,
+                            db[host.ip]["city"],
+                            db[host.ip]["country"],
+                        ])
+                        .draw();
+                }
 
-  if (hosts.length === 0) {
-    $(this).attr("class","form-control btn btn-danger").text("Could not find any IP addresses in the input.");
-    return;
-  }
+                const lat = 52.22977;
+                const lng = 21.01178;
+                const zoom = 1;
+                let map = new L.map("map").setView([lat, lng], zoom);
+                let markers = [];
 
-  let requestBody = hosts.filter(host => !(host.ip in db)).map(host => `${host.ip}/loc`);
-  if (requestBody.length > 100) {
-    console.warn("Max 100 IPs in a batch request. TODO: Make multiple batch requests. For now you can just click the button multiple times, and then clear the map and click it a final time.");
-    requestBody = requestBody.slice(0, 100);
-  }
+                L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                    attribution:
+                        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                }).addTo(map);
 
-  if (requestBody.length === 0) {
-    draw(hosts);
-    return;
-  }
+                // store location lookups in a database to prevent duplicate lookups
+                var db = {};
 
-  if (window.location.host !== "stefansundin.github.io") {
-    // please don't use my token on your fork!
-    // requests made without a token are limited based on domain name or source IP address, but will get less than 1000 requests/day (can't find good documentation on this)
-    // please get your own token by creating a free account at https://ipinfo.io/
-    // free accounts can make up to 1000 requests/day. note that batch requests still count every IP as a request.
-    // if you revert to an older version that doesn't use the batch API, then it seems like you can make an unlimited number of requests from file:// URLs
-    // try https://github.com/stefansundin/traceroute-mapper/tree/6e96144e61f01409157b2f4d7e4fbbfa4ac74d2f
-    $(this).attr("class","form-control btn btn-danger").text("Please sign up and get an API token from ipinfo.io.");
-    return;
-  }
+                function draw(hosts) {
+                    hosts = hosts.filter((host) => host.ip in db);
 
-  $(this).attr("class","form-control btn btn-info").text("Working...");
+                    if (hosts.length === 0) {
+                        return;
+                    }
 
-  const url = `https://ipinfo.io/batch?token=5886e32e75537e`;
-  fetch(url, {
-    method: "POST",
-    headers: new Headers({
-      "Content-Type": "application/json",
-    }),
-    body: JSON.stringify(requestBody),
-  }).then(response => {
-    if (response.ok) {
-      return response.json();
-    }
-    console.error(response);
-    throw new Error(response.status);
-  }).then(data => {
-    $("#submit").attr("class","form-control btn btn-primary").text("Map it!");
-    Object.entries(data).forEach(entry => {
-      if (entry[1].error) {
-        console.error(entry[0], entry[1].error);
-        // Do not report some errors in the button text
-        if (entry[1].error.title === "Invalid Token") {
-          return;
-        }
-        // Report error in the button text
-        $("#submit").attr("class","form-control btn btn-danger").text(
-          (entry[1].error.title === "Rate limit exceeded") ? "ipinfo.io ratelimit exhausted. Please try again tomorrow." : `Error: ${entry[1].error.title}`
-        );
-        return;
-      }
-      const ip = entry[0].split("/")[0];
-      const loc = entry[1].trim();
-      if (loc === "undefined") {
-        db[ip] = loc;
-        return;
-      }
-      const ll = loc.split(",").map(parseFloat);
-      console.log(ip, ll);
-      db[ip] = { lat: ll[0], lng: ll[1] };
-    });
-    draw(hosts);
-  }).catch(error => {
-    console.error(error);
-    let err = (error.message === "Failed to fetch" || error.message === "NetworkError when attempting to fetch resource.") ? "Request not sent to ipinfo.io. Are you using an adblocker?" : "An error occurred.";
-    $("#submit").attr("class","form-control btn btn-danger").text(err);
-  });
-});
+                    table.clear();
 
-$("#clear-map").click(function() {
-  markers.forEach(function(marker) {
-    marker.setMap(null);
-  });
-  markers = [];
-});
-$("#permalink").click(function() {
-  if (this.href === "") {
-    alert("Please map a trace first.");
-  }
-});
+                    for (let i = 0; i < hosts.length; i++) {
+                        const host = hosts[i];
+                        console.log("Adding host", host.n);
+                        const marker = new L.Marker(db[host.ip]["loc"], {
+                            title: host.n.toString(),
+                            icon: new L.AwesomeNumberMarkers({
+                                number: host.n,
+                                markerColor: "blue",
+                            }),
+                        })
+                            .bindPopup(`${host.n}: ${host.ip}`)
+                            .openPopup()
+                            .addTo(map);
+                        markers.push(marker);
+                        addHost(host);
+                    }
 
-const qs = window.location.search;
-if (qs[0] === "?") {
-  let params = {};
-  qs.substr(1).split("&").forEach(function(param) {
-    param = param.split("=");
-    params[param[0]] = decodeURIComponent(param[1]);
-  });
-  if (params["trace"]) {
-    $("#trace").val(params["trace"].trim());
-    $("#submit").click();
-    setTimeout(function() {
-      if (markers.length > 0) {
-        $("#map")[0].scrollIntoView();
-      }
-    }, 200);
-  }
-}
+                    // draw lines
+                    for (let i = 1; i < hosts.length; i++) {
+                        const host1 = hosts[i - 1];
+                        const host2 = hosts[i];
+                        markers.push(
+                            new L.Polyline(
+                                [db[host1.ip]["loc"], db[host2.ip]["loc"]],
+                                {
+                                    color: "#FF0000",
+                                }
+                            ).addTo(map)
+                        );
+                    }
+                    map.fitBounds(
+                        new L.featureGroup(markers).getBounds().pad(0.5)
+                    );
+                }
 
-$("#example").click(function() {
-  $("#trace").val("traceroute to china.cn (202.130.245.42), 30 hops max, 60 byte packets\n\
- 1  lc207-gw.campus.ltu.se (130.240.207.1)  0.219 ms\n\
- 2  gw22.pub.ltu.se (130.240.22.129)  0.974 ms\n\
- 3  sunetgreen.net.ltu.se (130.240.22.78)  1.336 ms\n\
- 4  ltu-br1.sunet.se (193.11.0.48)  1.302 ms\n\
- 5  ltu-br2-xe-0-0-3.sunet.se (130.242.85.94)  1.202 ms\n\
- 6  z3lla-xe-2-0-0.sunet.se (130.242.85.89)  0.542 ms\n\
- 7  se-lla.nordu.net (109.105.102.93)  0.574 ms\n\
- 8  se-fre.nordu.net (109.105.97.113)  13.105 ms\n\
- 9  s-b3-link.telia.net (213.248.97.17)  16.265 ms\n\
-10  s-bb4-link.telia.net (80.91.253.226)  13.546 ms\n\
-11  kbn-bb3-link.telia.net (62.115.139.167)  22.249 ms\n\
-12  nyk-bb1-link.telia.net (62.115.141.99)  115.487 ms\n\
-13  ash-bb4-link.telia.net (213.155.133.9)  126.166 ms\n\
-14  las-b3-link.telia.net (213.155.137.59)  194.745 ms\n\
-15  219.158.102.81 (219.158.102.81)  369.420 ms\n\
-16  219.158.102.81 (219.158.102.81)  385.420 ms\n\
-17  219.158.98.145 (219.158.98.145)  387.710 ms\n\
-18  124.65.194.82 (124.65.194.82)  368.584 ms\n\
-19  61.148.143.18 (61.148.143.18)  368.667 ms\n\
-20  61.148.143.18 (61.148.143.18)  378.916 ms\n\
-21  210.74.176.238 (210.74.176.238)  424.108 ms\n\
-22  210.74.176.238 (210.74.176.238)  428.721 ms");
-  $("#submit").click();
-});
+                $("#submit").click(function () {
+                    const text = $("#trace").val();
+                    $("#permalink").attr(
+                        "href",
+                        "?trace=" + encodeURIComponent(text)
+                    );
+                    let hosts = [];
+                    let ips = [];
+                    text.split("\n").forEach(function (line) {
+                        let r1, r2;
+                        if (
+                            (r1 = /^ *(\d+) /.exec(line)) !== null &&
+                            ((r2 =
+                                /\(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\)/.exec(
+                                    line
+                                )) !== null ||
+                                (r2 =
+                                    /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/.exec(
+                                        line
+                                    )) !== null ||
+                                (r2 =
+                                    /\((?:[0-9a-f]{1,4}::?){1,7}[0-9a-f]{1,4}\)/.exec(
+                                        line
+                                    )) !== null ||
+                                (r2 =
+                                    /\b(?:[0-9a-f]{1,4}::?){1,7}[0-9a-f]{1,4}\b/.exec(
+                                        line
+                                    )) !== null)
+                        ) {
+                            const n = parseInt(r1[1]);
+                            let ip = r2[0];
+                            if (ip[0] === "(") {
+                                ip = ip.substring(1, r2[0].length - 1);
+                            }
+                            // Filter out RFC1918 private IP ranges
+                            // ipinfo returns an "Invalid Token" error on these
+                            // Maybe some IPv6 addresses should also be filtered?
+                            if (
+                                ip.startsWith("10.") ||
+                                ip.startsWith("192.168.")
+                            ) {
+                                console.warn("Skipping private IP", ip);
+                                return;
+                            } else if (ip.startsWith("172.")) {
+                                const byte = parseInt(ip.split(".")[1], 10);
+                                if (byte >= 16 && byte < 32) {
+                                    console.warn("Skipping private IP", ip);
+                                    return;
+                                }
+                            }
+                            // Add IP to hosts if not already present
+                            if (!ips.includes(ip)) {
+                                ips.push(ip);
+                                hosts.push({ n: n, ip: ip });
+                            }
+                        }
+                    });
 
-</script>
-</body>
+                    if (hosts.length === 0) {
+                        $(this)
+                            .attr("class", "form-control btn btn-danger")
+                            .text(
+                                "Could not find any IP addresses in the input."
+                            );
+                        return;
+                    }
+
+                    let requestBody = hosts
+                        .filter((host) => !(host.ip in db))
+                        .map((host) => `${host.ip}`);
+                    if (requestBody.length > 100) {
+                        console.warn(
+                            "Max 100 IPs in a batch request. TODO: Make multiple batch requests. For now you can just click the button multiple times, and then clear the map and click it a final time."
+                        );
+                        requestBody = requestBody.slice(0, 100);
+                    }
+
+                    if (requestBody.length === 0) {
+                        draw(hosts);
+                        return;
+                    }
+
+                    $(this)
+                        .attr("class", "form-control btn btn-info")
+                        .text("Working...");
+
+                    const url = `https://ipinfo.io/batch?token=e9457d828b247e`;
+                    fetch(url, {
+                        method: "POST",
+                        headers: new Headers({
+                            "Content-Type": "application/json",
+                        }),
+                        body: JSON.stringify(requestBody),
+                    })
+                        .then((response) => {
+                            if (response.ok) {
+                                return response.json();
+                            }
+                            console.error(response);
+                            throw new Error(response.status);
+                        })
+                        .then((data) => {
+                            $("#submit")
+                                .attr("class", "form-control btn btn-primary")
+                                .text("Map it!");
+                            Object.entries(data).forEach((entry) => {
+                                if (entry[1].error) {
+                                    console.error(entry[0], entry[1].error);
+                                    // Do not report some errors in the button text
+                                    if (
+                                        entry[1].error.title === "Invalid Token"
+                                    ) {
+                                        return;
+                                    }
+                                    // Report error in the button text
+                                    $("#submit")
+                                        .attr(
+                                            "class",
+                                            "form-control btn btn-danger"
+                                        )
+                                        .text(
+                                            entry[1].error.title ===
+                                                "Rate limit exceeded"
+                                                ? "ipinfo.io ratelimit exhausted. Please try again tomorrow."
+                                                : `Error: ${entry[1].error.title}`
+                                        );
+                                    return;
+                                }
+                                const ip = entry[0].split("/")[0];
+                                const loc = entry[1]["loc"].trim();
+                                const regionNamesInEnglish =
+                                    new Intl.DisplayNames(["en"], {
+                                        type: "region",
+                                    });
+                                const country = regionNamesInEnglish.of(
+                                    entry[1]["country"]
+                                );
+                                const city = entry[1]["city"];
+                                if (loc === "undefined") {
+                                    db[ip] = loc;
+                                    return;
+                                }
+                                const ll = loc.split(",").map(parseFloat);
+                                db[ip] = {
+                                    loc: L.latLng(ll[0], ll[1]),
+                                    city: city,
+                                    country: country,
+                                };
+                            });
+                            draw(hosts);
+                        })
+                        .catch((error) => {
+                            console.error(error);
+                            let err =
+                                error.message === "Failed to fetch" ||
+                                error.message ===
+                                    "NetworkError when attempting to fetch resource."
+                                    ? "Request not sent to ipinfo.io. Are you using an adblocker?"
+                                    : "An error occurred.";
+                            $("#submit")
+                                .attr("class", "form-control btn btn-danger")
+                                .text(err);
+                        });
+                });
+
+                $("#clear-map").click(function () {
+                    markers.forEach(function (marker) {
+                        marker.setMap(null);
+                    });
+                    markers = [];
+                });
+                $("#permalink").click(function () {
+                    if (this.href === "") {
+                        alert("Please map a trace first.");
+                    }
+                });
+
+                const qs = window.location.search;
+                if (qs[0] === "?") {
+                    let params = {};
+                    qs.substr(1)
+                        .split("&")
+                        .forEach(function (param) {
+                            param = param.split("=");
+                            params[param[0]] = decodeURIComponent(param[1]);
+                        });
+                    if (params["trace"]) {
+                        $("#trace").val(params["trace"].trim());
+                        $("#submit").click();
+                        setTimeout(function () {
+                            if (markers.length > 0) {
+                                $("#map")[0].scrollIntoView();
+                            }
+                        }, 200);
+                    }
+                }
+
+                $("#example").click(function () {
+                    $("#trace").val(
+                        "traceroute to china.cn (202.130.245.42), 30 hops max, 60 byte packets\n\
+             1  lc207-gw.campus.ltu.se (130.240.207.1)  0.219 ms\n\
+             2  gw22.pub.ltu.se (130.240.22.129)  0.974 ms\n\
+             3  sunetgreen.net.ltu.se (130.240.22.78)  1.336 ms\n\
+             4  ltu-br1.sunet.se (193.11.0.48)  1.302 ms\n\
+             5  ltu-br2-xe-0-0-3.sunet.se (130.242.85.94)  1.202 ms\n\
+             6  z3lla-xe-2-0-0.sunet.se (130.242.85.89)  0.542 ms\n\
+             7  se-lla.nordu.net (109.105.102.93)  0.574 ms\n\
+             8  se-fre.nordu.net (109.105.97.113)  13.105 ms\n\
+             9  s-b3-link.telia.net (213.248.97.17)  16.265 ms\n\
+            10  s-bb4-link.telia.net (80.91.253.226)  13.546 ms\n\
+            11  kbn-bb3-link.telia.net (62.115.139.167)  22.249 ms\n\
+            12  nyk-bb1-link.telia.net (62.115.141.99)  115.487 ms\n\
+            13  ash-bb4-link.telia.net (213.155.133.9)  126.166 ms\n\
+            14  las-b3-link.telia.net (213.155.137.59)  194.745 ms\n\
+            15  219.158.102.81 (219.158.102.81)  369.420 ms\n\
+            16  219.158.102.81 (219.158.102.81)  385.420 ms\n\
+            17  219.158.98.145 (219.158.98.145)  387.710 ms\n\
+            18  124.65.194.82 (124.65.194.82)  368.584 ms\n\
+            19  61.148.143.18 (61.148.143.18)  368.667 ms\n\
+            20  61.148.143.18 (61.148.143.18)  378.916 ms\n\
+            21  210.74.176.238 (210.74.176.238)  424.108 ms\n\
+            22  210.74.176.238 (210.74.176.238)  428.721 ms"
+                    );
+                    $("#submit").click();
+                });
+            });
+        </script>
+    </body>
 </html>
