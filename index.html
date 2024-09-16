@@ -13,7 +13,6 @@
   <link rel="license" href="https://www.gnu.org/licenses/gpl-3.0.html" title="GNU GPL v3 or later">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css" integrity="sha384-9bhh0d43Gp9ct3OBqOdccAg6nQ48H3ibQN30wXbD0oC/uFYftJt4aOK45aGS1TJL" crossorigin="anonymous">
-  <script src="https://code.jquery.com/jquery-3.6.3.slim.min.js" integrity="sha256-ZwqZIVdD3iXNyGHbSYdsmWP//UBokj2FHAxKuSBKDSo=" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js" integrity="sha384-7vPKZ4tJu1bzHAHC5hZK26xx4UDhcxVmp2URUWN+N9+7wj6ZOTcdD+DwQcHtgxvO" crossorigin="anonymous"></script>
 <style>
 body {
@@ -68,6 +67,9 @@ h2 {
   padding: 0 0.75rem;
   margin: 6px 4px;
 }
+#map-controls a {
+  text-decoration: none;
+}
 </style>
 </head>
 <body>
@@ -103,8 +105,16 @@ h2 {
   </div>
 
 <script>
+const mapElement = document.getElementById("map");
+const mapControlsElement = document.getElementById("map-controls");
+const submitButton = document.getElementById("submit");
+const traceInput = document.getElementById("trace");
+const clearMapButton = document.getElementById("clear-map");
+const permalink = document.getElementById("permalink");
+const exampleLink = document.getElementById("example");
+
 const map = new ol.Map({
-  target: "map",
+  target: mapElement,
   layers: [
     new ol.layer.Tile({
       source: new ol.source.OSM()
@@ -117,12 +127,12 @@ const map = new ol.Map({
 });
 
 map.addControl(new ol.control.Control({
-  element: $("#map-controls")[0],
+  element: mapControlsElement,
 }));
 
 let markers = [];
 
-// store location lookups in a database to prevent duplicate lookups
+// store location lookups in a database to avoid unnecessary lookups
 let db = {};
 
 function draw(hosts) {
@@ -167,12 +177,13 @@ function draw(hosts) {
   }
 }
 
-$("#submit").click(function() {
-  const text = $("#trace").val();
-  $("#permalink").attr("href", "?trace="+encodeURIComponent(text));
+submitButton.addEventListener("click", async function() {
+  const text = traceInput.value;
+  permalink.href = "?trace="+encodeURIComponent(text);
   let hosts = [];
   let ips = [];
-  text.split("\n").forEach(function(line) {
+
+  for (const line of text.split("\n")) {
     let r1, r2;
     if (
       (r1=/^ *(\d+) /.exec(line)) !== null && (
@@ -192,13 +203,13 @@ $("#submit").click(function() {
       // Maybe some IPv6 addresses should also be filtered?
       if (ip.startsWith("10.") || ip.startsWith("192.168.")) {
         console.warn("Skipping private IP", ip);
-        return;
+        continue;
       }
       else if (ip.startsWith("172.")) {
         const byte = parseInt(ip.split(".")[1], 10);
         if (byte >= 16 && byte < 32) {
           console.warn("Skipping private IP", ip);
-          return;
+          continue;
         }
       }
       // Add IP to hosts if not already present
@@ -207,10 +218,12 @@ $("#submit").click(function() {
         hosts.push({ n: n, ip: ip });
       }
     }
-  });
+  }
 
   if (hosts.length === 0) {
-    $(this).attr("class","form-control btn btn-danger").text("Could not find any IP addresses in the input.");
+    submitButton.classList.remove("btn-info", "btn-primary");
+    submitButton.classList.add("btn-danger");
+    submitButton.textContent = "Could not find any IP addresses in the input";
     return;
   }
 
@@ -232,28 +245,35 @@ $("#submit").click(function() {
     // free accounts can make up to 1000 requests/day. note that batch requests still count every IP as a request.
     // if you revert to an older version that doesn't use the batch API, then it seems like you can make an unlimited number of requests from file:// URLs
     // try https://github.com/stefansundin/traceroute-mapper/tree/6e96144e61f01409157b2f4d7e4fbbfa4ac74d2f
-    $(this).attr("class","form-control btn btn-danger").text("Please sign up and get an API token from ipinfo.io.");
+    this.classList.remove("btn-info");
+    this.classList.add("btn-danger");
+    this.textContent = "Please sign up and get an API token from ipinfo.io";
     return;
   }
 
-  $(this).attr("class","form-control btn btn-info").text("Working...");
+  submitButton.classList.remove("btn-danger");
+  submitButton.classList.add("btn-info");
+  submitButton.textContent = "Working...";
 
-  const url = `https://ipinfo.io/batch?token=5886e32e75537e`;
-  fetch(url, {
-    method: "POST",
-    headers: new Headers({
-      "Content-Type": "application/json",
-    }),
-    body: JSON.stringify(requestBody),
-  }).then(response => {
-    if (response.ok) {
-      return response.json();
+  try {
+    const url = `https://ipinfo.io/batch?token=5886e32e75537e`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: new Headers({
+        "Content-Type": "application/json",
+      }),
+      body: JSON.stringify(requestBody),
+    });
+    if (!response.ok) {
+      console.error(response);
+      throw new Error(response.status);
     }
-    console.error(response);
-    throw new Error(response.status);
-  }).then(data => {
-    $("#submit").attr("class","form-control btn btn-primary").text("Map it!");
-    Object.entries(data).forEach(entry => {
+
+    const data = await response.json();
+    submitButton.classList.remove("btn-info");
+    submitButton.classList.add("btn-primary");
+    submitButton.textContent = "Map it!";
+    for (const entry of Object.entries(data)) {
       if (entry[1].error) {
         console.error(entry[0], entry[1].error);
         // Do not report some errors in the button text
@@ -261,10 +281,10 @@ $("#submit").click(function() {
           return;
         }
         // Report error in the button text
-        $("#submit").attr("class","form-control btn btn-danger").text(
-          (entry[1].error.title === "Rate limit exceeded") ? "ipinfo.io ratelimit exhausted. Please try again tomorrow." : `Error: ${entry[1].error.title}`
-        );
-        return;
+        submitButton.classList.remove("btn-primary");
+        submitButton.classList.add("btn-danger");
+        submitButton.textContent = (entry[1].error.title === "Rate limit exceeded") ? "ipinfo.io ratelimit exhausted. Please try again tomorrow." : `Error: ${entry[1].error.title}`;
+        continue;
       }
       const ip = entry[0].split("/")[0];
       const loc = entry[1].trim();
@@ -275,22 +295,24 @@ $("#submit").click(function() {
       const ll = loc.split(",").map(parseFloat);
       console.log(ip, ll);
       db[ip] = [ll[1], ll[0]];
-    });
+    }
     draw(hosts);
-  }).catch(error => {
-    console.error(error);
-    let err = (error.message === "Failed to fetch" || error.message === "NetworkError when attempting to fetch resource.") ? "Request not sent to ipinfo.io. Are you using an adblocker?" : "An error occurred.";
-    $("#submit").attr("class","form-control btn btn-danger").text(err);
-  });
+  } catch (err) {
+    console.error(err);
+    const errorMessage = (err.message === "Failed to fetch" || err.message === "NetworkError when attempting to fetch resource.") ? `Request not sent to ipinfo.io. Are you using an adblocker?${navigator.userAgent.includes("Firefox/") ? " Or Firefox's Enhanced Tracking Protection?" : ''}` : "An error occurred (see browser console)";
+    submitButton.classList.remove("btn-primary");
+    submitButton.classList.add("btn-danger");
+    submitButton.textContent = errorMessage;
+  }
 });
 
-$("#clear-map").click(function() {
-  markers.forEach(function(marker) {
+clearMapButton.addEventListener("click", function() {
+  markers.forEach((marker) => {
     map.removeLayer(marker);
   });
   markers = [];
 });
-$("#permalink").click(function() {
+permalink.addEventListener("click", function() {
   if (this.href === "") {
     alert("Please map a trace first.");
   }
@@ -304,18 +326,18 @@ if (qs[0] === "?") {
     params[param[0]] = decodeURIComponent(param[1]);
   });
   if (params["trace"]) {
-    $("#trace").val(params["trace"].trim());
-    $("#submit").click();
+    traceInput.value = params["trace"].trim();
+    submitButton.click();
     setTimeout(function() {
       if (markers.length > 0) {
-        $("#map")[0].scrollIntoView();
+        mapElement.scrollIntoView();
       }
     }, 200);
   }
 }
 
-$("#example").click(function() {
-  $("#trace").val("traceroute to china.cn (202.130.245.42), 30 hops max, 60 byte packets\n\
+exampleLink.addEventListener("click", function() {
+  traceInput.value = "traceroute to china.cn (202.130.245.42), 30 hops max, 60 byte packets\n\
  1  lc207-gw.campus.ltu.se (130.240.207.1)  0.219 ms\n\
  2  gw22.pub.ltu.se (130.240.22.129)  0.974 ms\n\
  3  sunetgreen.net.ltu.se (130.240.22.78)  1.336 ms\n\
@@ -337,8 +359,8 @@ $("#example").click(function() {
 19  61.148.143.18 (61.148.143.18)  368.667 ms\n\
 20  61.148.143.18 (61.148.143.18)  378.916 ms\n\
 21  210.74.176.238 (210.74.176.238)  424.108 ms\n\
-22  210.74.176.238 (210.74.176.238)  428.721 ms");
-  $("#submit").click();
+22  210.74.176.238 (210.74.176.238)  428.721 ms";
+  submitButton.click();
 });
 
 </script>
