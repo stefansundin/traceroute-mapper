@@ -85,9 +85,9 @@ h2 {
     <p><button class="form-control btn btn-primary" id="submit">Map it!</button></p>
     <div id="map"></div>
     <h2>Tips</h2>
-    <p>Linux: <code>traceroute -I -q1 example.com | xclip -sel clip</code></p>
-    <p>Mac: <code>traceroute -I -q1 example.com | pbcopy</code></p>
-    <p>Windows: <code>tracert example.com | clip</code></p>
+    <p>Linux: <code>traceroute -I -q1 example.com</code></p>
+    <p>Mac: <code>traceroute -I -q1 example.com</code></p>
+    <p>Windows: <code>tracert example.com</code></p>
     <p><a href="https://github.com/stefansundin/traceroute-mapper#traceroute-mapper">Open from your terminal!</a></p>
     <hr>
     <ul>
@@ -180,8 +180,8 @@ function draw(hosts) {
 submitButton.addEventListener("click", async function() {
   const text = traceInput.value;
   permalink.href = "?trace="+encodeURIComponent(text);
-  let hosts = [];
-  let ips = [];
+  const hosts = [];
+  const ips = [];
 
   for (const line of text.split("\n")) {
     let r1, r2;
@@ -193,7 +193,7 @@ submitButton.addEventListener("click", async function() {
         (r2=/\b(?:[0-9a-f]{1,4}::?){1,7}[0-9a-f]{1,4}\b/.exec(line)) !== null
       )
     ) {
-      const n = parseInt(r1[1]);
+      const n = parseInt(r1[1], 10);
       let ip = r2[0];
       if (ip[0] === "(") {
         ip = ip.substring(1, r2[0].length-1);
@@ -320,7 +320,7 @@ permalink.addEventListener("click", function() {
 
 const qs = window.location.search;
 if (qs[0] === "?") {
-  let params = {};
+  const params = {};
   qs.substr(1).split("&").forEach(function(param) {
     param = param.split("=");
     params[param[0]] = decodeURIComponent(param[1]);
@@ -328,11 +328,6 @@ if (qs[0] === "?") {
   if (params["trace"]) {
     traceInput.value = params["trace"].trim();
     submitButton.click();
-    setTimeout(function() {
-      if (markers.length > 0) {
-        mapElement.scrollIntoView();
-      }
-    }, 200);
   }
 }
 
