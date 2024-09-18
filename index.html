@@ -132,7 +132,7 @@ map.addControl(new ol.control.Control({
 
 let markers = [];
 
-// store location lookups in a database to avoid unnecessary lookups
+// store location lookups in a database to avoid repeated lookups
 let db = {};
 
 function draw(hosts) {
@@ -321,12 +321,12 @@ permalink.addEventListener("click", function() {
 const qs = window.location.search;
 if (qs[0] === "?") {
   const params = {};
-  qs.substr(1).split("&").forEach(function(param) {
-    param = param.split("=");
-    params[param[0]] = decodeURIComponent(param[1]);
+  qs.substr(1).split("&").forEach((param) => {
+    const [key, value] = param.split("=");
+    params[key] = decodeURIComponent(value);
   });
-  if (params["trace"]) {
-    traceInput.value = params["trace"].trim();
+  if ('trace' in params) {
+    traceInput.value = params.trace.trim();
     submitButton.click();
   }
 }
