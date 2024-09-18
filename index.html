@@ -138,17 +138,48 @@ let db = {};
 function draw(hosts) {
   hosts = hosts.filter(host => host.ip in db);
 
+  const fill = new ol.style.Fill({
+    color: 'rgb(255, 255, 255)',
+  });
+  const stroke = new ol.style.Stroke({
+    color: 'rgb(51, 153, 204)',
+  });
+
   // draw markers
   for (let i=0; i < hosts.length; i++) {
     const host = hosts[i];
+    const feature = new ol.Feature({
+      geometry: new ol.geom.Point(ol.proj.fromLonLat(db[host.ip])),
+    });
+    feature.setStyle([
+      new ol.style.Style({
+        image: new ol.style.Circle({
+          radius: 10,
+          fill: fill,
+          stroke: stroke,
+        }),
+        fill: fill,
+        stroke: stroke,
+        text: new ol.style.Text({
+          text: host.n,
+          font: '12px calibri, sans-serif',
+          fill: new ol.style.Fill({
+            color: 'rgb(0, 0, 0)',
+          }),
+          stroke: new ol.style.Stroke({
+            color: 'rgb(255, 255, 255)',
+            width: 2,
+          }),
+        }),
+      }),
+    ]);
+
     const marker = new ol.layer.Vector({
       zIndex: host.n,
       source: new ol.source.Vector({
         features: [
-          new ol.Feature({
-            geometry: new ol.geom.Point(ol.proj.fromLonLat(db[host.ip]))
-          })
-        ]
+          feature
+        ],
       }),
     });
     map.addLayer(marker);
