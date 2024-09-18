@@ -138,39 +138,48 @@ let db = {};
 function draw(hosts) {
   hosts = hosts.filter(host => host.ip in db);
 
-  const fill = new ol.style.Fill({
-    color: 'rgb(255, 255, 255)',
-  });
-  const stroke = new ol.style.Stroke({
-    color: 'rgb(51, 153, 204)',
-  });
-
   // draw markers
   for (let i=0; i < hosts.length; i++) {
     const host = hosts[i];
     const feature = new ol.Feature({
       geometry: new ol.geom.Point(ol.proj.fromLonLat(db[host.ip])),
     });
+    // Render a custom marker icon that look similar to a Google Maps pin
     feature.setStyle([
       new ol.style.Style({
-        image: new ol.style.Circle({
-          radius: 10,
-          fill: fill,
-          stroke: stroke,
-        }),
-        fill: fill,
-        stroke: stroke,
-        text: new ol.style.Text({
-          text: host.n,
-          font: '12px calibri, sans-serif',
-          fill: new ol.style.Fill({
-            color: 'rgb(0, 0, 0)',
-          }),
-          stroke: new ol.style.Stroke({
-            color: 'rgb(255, 255, 255)',
-            width: 2,
-          }),
-        }),
+        renderer(coordinates, state) {
+          const [x, y] = coordinates;
+          const ctx = state.context;
+
+          // Curves taken from https://commons.wikimedia.org/wiki/File:Googlemap.svg
+          ctx.beginPath();
+          ctx.strokeStyle = 'rgb(0, 0, 0)';
+          ctx.fillStyle = 'rgb(232, 30, 37)';
+          ctx.moveTo(x, y);
+          ctx.bezierCurveTo(x+0.814645,  y-3.999069,  x+2.25098,   y-7.326002,  x+3.990706,  y-10.411394);
+          ctx.bezierCurveTo(x+5.281138,  y-12.699281, x+6.776043,  y-14.811039, x+8.159216,  y-17.02964);
+          ctx.bezierCurveTo(x+8.620945,  y-17.770272, x+9.019418,  y-18.552702, x+9.463097,  y-19.321349);
+          ctx.bezierCurveTo(x+10.350242, y-20.858281, x+11.069525, y-22.640264, x+11.02382,  y-24.951791);
+          ctx.bezierCurveTo(x+10.979164, y-27.210274, x+10.325971, y-29.02195,  x+9.384063,  y-30.503216);
+          ctx.bezierCurveTo(x+7.834899,  y-32.939524, x+5.239993,  y-34.937033, x+1.758259,  y-35.462034);
+          ctx.bezierCurveTo(x-1.088484,  y-35.891162, x-3.757507,  y-35.166035, x-5.650237,  y-34.059288);
+          ctx.bezierCurveTo(x-7.196902,  y-33.154871, x-8.394636,  y-31.946771, x-9.305067,  y-30.522978);
+          ctx.bezierCurveTo(x-10.255342, y-29.036923, x-10.909707, y-27.281294, x-10.964597, y-24.991306);
+          ctx.bezierCurveTo(x-10.992707, y-23.818068, x-10.800581, y-22.731583, x-10.529938, y-21.830359);
+          ctx.bezierCurveTo(x-10.256035, y-20.918141, x-9.815529,  y-20.155613, x-9.423611,  y-19.341112);
+          ctx.bezierCurveTo(x-8.658558,  y-17.75118,  x-7.6994,    y-16.294397, x-6.736807,  y-14.836751);
+          ctx.bezierCurveTo(x-3.869663,  y-10.495044, x-1.178574,  y-6.067215,  x,           y);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          // Add text
+          ctx.fillStyle = 'rgba(0, 0, 0)';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.font = '12px sans-serif';
+          ctx.fillText(host.n, x, y-23);
+        },
       }),
     ]);
 
