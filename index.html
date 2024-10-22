@@ -139,10 +139,13 @@ function draw(hosts) {
   hosts = hosts.filter(host => host.ip in db);
 
   // draw markers
+  const bounds = [];
   for (let i=0; i < hosts.length; i++) {
     const host = hosts[i];
+    const coords = ol.proj.fromLonLat(db[host.ip]);
+    bounds.push(coords);
     const feature = new ol.Feature({
-      geometry: new ol.geom.Point(ol.proj.fromLonLat(db[host.ip])),
+      geometry: new ol.geom.Point(coords),
     });
     // Render a custom marker icon that look similar to a Google Maps pin
     feature.setStyle([
@@ -193,6 +196,18 @@ function draw(hosts) {
     });
     map.addLayer(marker);
     markers.push(marker);
+  }
+
+  // reposition map view
+  if (bounds.length > 0) {
+    const extent = ol.extent.boundingExtent(bounds);
+    // setTimeout is used since otherwise the animation blocks rendering of the markers and lines
+    setTimeout(() => {
+      map.getView().fit(extent, {
+        padding: [15, 15, 15, 15],
+        duration: 500,
+      });
+    });
   }
 
   // draw lines
