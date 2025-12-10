@@ -138,6 +138,33 @@ let db = {};
 function draw(hosts) {
   hosts = hosts.filter(host => host.ip in db);
 
+  // draw lines
+  for (let i=1; i < hosts.length; i++) {
+    const host1 = hosts[i-1];
+    const host2 = hosts[i];
+    // console.log("drawing line between", [ db[host1.ip], db[host2.ip] ]);
+    // Would it be shorter to cross the antimeridian?
+    if (Math.abs(db[host1.ip][0] - db[host2.ip][0]) > 180) {
+      // We are affecting db so that the created markers will have the adjusted coordinates,
+      //  which will result in the bounds being correct to reposition the map view properly.
+      db[host1.ip][0] += db[host1.ip][0] < 0 ? 360 : -360;
+    }
+    const line = new ol.layer.Vector({
+      source: new ol.source.Vector({
+        features: [
+          new ol.Feature({
+            geometry: new ol.geom.LineString([
+              ol.proj.fromLonLat(db[host1.ip]),
+              ol.proj.fromLonLat(db[host2.ip]),
+            ])
+          })
+        ]
+      }),
+    });
+    map.addLayer(line);
+    markers.push(line);
+  }
+
   // draw markers
   const bounds = [];
   for (let i=0; i < hosts.length; i++) {
@@ -201,34 +228,10 @@ function draw(hosts) {
   // reposition map view
   if (bounds.length > 0) {
     const extent = ol.extent.boundingExtent(bounds);
-    // setTimeout is used since otherwise the animation blocks rendering of the markers and lines
-    setTimeout(() => {
-      map.getView().fit(extent, {
-        padding: [15, 15, 15, 15],
-        duration: 500,
-      });
+    map.getView().fit(extent, {
+      padding: [15, 15, 15, 15],
+      duration: 500,
     });
-  }
-
-  // draw lines
-  for (let i=1; i < hosts.length; i++) {
-    const host1 = hosts[i-1];
-    const host2 = hosts[i];
-    // console.log("drawing line between", [ db[host1.ip], db[host2.ip] ]);
-    const line = new ol.layer.Vector({
-      source: new ol.source.Vector({
-        features: [
-          new ol.Feature({
-            geometry: new ol.geom.LineString([
-              ol.proj.fromLonLat(db[host1.ip]),
-              ol.proj.fromLonLat(db[host2.ip]),
-            ])
-          })
-        ]
-      }),
-    });
-    map.addLayer(line);
-    markers.push(line);
   }
 }
 
